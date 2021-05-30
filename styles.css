@@ -10,7 +10,9 @@
 	text-align: center;
 	
 	margin: auto;
-	width: 600px;
+	margin-top: 60px;
+	margin-bottom: 60px;
+	width: 50vw;
 }
 
 .text {
@@ -18,7 +20,7 @@
 	text-align: left;
 	
 	margin: auto;
-	width: 800px;
+	width: 55vw;
 }
 
 .links {
@@ -26,5 +28,47 @@
 	text-align: left;
 	
 	margin: auto;
-	width: 1000px;
+	
+	width: 65vw;
+}
+
+.preview {
+	font-family: Arial, sans-serif;
+	text-align: center;
+	
+	width: 98vw;
+	height: 30vh;
+	margin-top: 30px;
+	
+}
+
+.preview-left {
+	float: left;
+	width: 25vw;
+	height: 30vh;
+	margin-left: 50px;
+	
+}
+
+.preview-center {
+	margin: auto;
+	width: 25vw;
+	display: inline-block;
+	height: 30vh;
+	
+}
+
+.preview-right {
+	float: right;
+	width: 25vw;
+	height: 30vh;
+	margin-right: 50px;
+	
+}
+
+.preview-img {
+	height: 25vh;
+	margin: auto;
+	margin-top: 0;
+	border: 1px solid black;
 }
