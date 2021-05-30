@@ -1,5 +1,10 @@
 @charset "ISO-8859-1";
 
+.page {
+  	width: 95vw;
+  	height: 95vh;
+}
+
 .header {
 	font-family: Arial, sans-serif;
 	text-align: center;
