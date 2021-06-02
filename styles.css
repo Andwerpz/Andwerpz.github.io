@@ -1,6 +1,19 @@
 @charset "ISO-8859-1";
 
+html, body {
+    margin: 0;
+    padding: 0;
+}
+
+#js {
+    width: 100%;
+    margin: 0; 
+    padding: 0; 
+    overflow-x: hidden;
+}
+
 .page {
+	font-family: Arial, sans-serif;
   	width: 95vw;
   	height: 95vh;
 }
@@ -16,7 +29,6 @@
 }
 
 .text {
-	font-family: Arial, sans-serif;
 	text-align: left;
 	
 	margin: auto;
@@ -24,10 +36,9 @@
 }
 
 .preview {
-	font-family: Arial, sans-serif;
 	text-align: left;
 	
-	width: 60vw;
+	width: 60vw;	
 	height: 30vh;
 	margin: auto;
 	margin-top: 30px;
