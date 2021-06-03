@@ -93,7 +93,10 @@ class Boid {
 						let diff = p5.Vector.sub(this.position, b);
 						diff.div(d * d);
 						avgDiff.add(diff);
-						strokeWeight(Math.min((10 * this.perceptionRadius) / (d * d), 1));
+						
+					}
+					if(d <= this.perceptionRadius + 10){
+						strokeWeight(Math.min((6 * this.perceptionRadius) / (d * d), 1));
 						line(this.position.x, this.position.y, b.x, b.y);
 					}
 				}
