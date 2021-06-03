@@ -18,7 +18,7 @@ function setup(){
 		}
 	}
 	print(bucket);
-	for(let i = 0; i < 200; i++){
+	for(let i = 0; i < 100; i++){
 		let x = random(width);
 		let y = random(height);
 		//bucket[0][0].push(new Boid(x, y, perceptionRadius));

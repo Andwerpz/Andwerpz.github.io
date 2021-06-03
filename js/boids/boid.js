@@ -7,7 +7,7 @@ class Boid {
 		this.acceleration = createVector();
 		this.perceptionRadius = pr;
 		this.maxForce = 0.2;
-		this.maxSpeed = 2;
+		this.maxSpeed = .7;
 	}
 	
 	draw() {
@@ -93,7 +93,7 @@ class Boid {
 						let diff = p5.Vector.sub(this.position, b);
 						diff.div(d * d);
 						avgDiff.add(diff);
-						strokeWeight(Math.min((100 * this.perceptionRadius) / (d * d), 1));
+						strokeWeight(Math.min((10 * this.perceptionRadius) / (d * d), 1));
 						line(this.position.x, this.position.y, b.x, b.y);
 					}
 				}
