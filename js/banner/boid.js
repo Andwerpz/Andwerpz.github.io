@@ -6,34 +6,14 @@ class Boid {
 		this.velocity.mult(random(4));
 		this.acceleration = createVector();
 		this.perceptionRadius = pr;
-		this.maxForce = 0.3;
-		this.maxSpeed = 3;
+		this.maxForce = 0.2;
+		this.maxSpeed = .7;
 	}
 	
 	draw() {
 		strokeWeight(8);
 		stroke(255);
 		point(this.position.x, this.position.y);
-		
-		//draw triangle based on velocity
-		
-		let tangent = createVector(this.velocity.x, this.velocity.y);
-		tangent.setMag(0.7);
-		let normal = createVector(-tangent.y, tangent.x);
-		normal.setMag(0.2);
-		
-		let p1 = createVector(this.position.x + tangent.x, this.position.y + tangent.y);
-		let p2 = createVector(this.position.x + normal.x, this.position.y + normal.y);
-		let p3 = createVector(this.position.x - tangent.x * 0.2, this.position.y - tangent.y * 0.2);
-		let p4 = createVector(this.position.x - normal.x, this.position.y - normal.y);
-		
-		
-		beginShape();
-		vertex(p1.x, p1.y);
-		vertex(p2.x, p2.y);
-		vertex(p3.x, p3.y);
-		vertex(p4.x, p4.y);
-		endShape(CLOSE);
 	}
 	
 	tick() {
@@ -86,21 +66,26 @@ class Boid {
 		//let output = "";
 		for(let i = bucketX - 1; i <= bucketX + 1; i++){
 			for(let j = bucketY - 1; j <= bucketY + 1; j++){
+			//output += (i % bucketXLength) + " " + (j % bucketYLength) + ", ";
 				for(let test of bucket[i % bucketXLength][j % bucketYLength]){
-					//output += (i % bucketXLength) + " " + (j % bucketYLength) + ", ";
+					
 					let b = createVector(test.position.x, test.position.y);
-					/*if(dist(this.position.x, this.position.y, b.x + width, b.y) < dist(this.position.x, this.position.y, b.x, b.y)){
+					if(dist(this.position.x, this.position.y, b.x + width, b.y) < dist(this.position.x, this.position.y, b.x, b.y)){
+						//print("PLUS WIDTH");
 						b.x += width;
 					}
 					else if(dist(this.position.x, this.position.y, b.x - width, b.y) < dist(this.position.x, this.position.y, b.x, b.y)){
+						//print("MINUS WIDTH");
 						b.x -= width;
 					}
 					if(dist(this.position.x, this.position.y, b.x, b.y + height) < dist(this.position.x, this.position.y, b.x, b.y)){
+						//print("PLUS HEIGHT");
 						b.y += height;
 					}
 					else if(dist(this.position.x, this.position.y, b.x, b.y - height) < dist(this.position.x, this.position.y, b.x, b.y)){
+						//print("MINUS HEIGHT");
 						b.y -= height;
-					}*/
+					}
 					let d = dist(this.position.x, this.position.y, b.x, b.y);
 					if(test != this && d <= this.perceptionRadius){
 						count ++;
@@ -116,6 +101,10 @@ class Boid {
 						diff.div(d * d);
 						avgDiff.add(diff);
 						
+					}
+					if(d <= this.perceptionRadius + 10){
+						strokeWeight(Math.min((6 * this.perceptionRadius) / (d * d), 1));
+						line(this.position.x, this.position.y, b.x, b.y);
 					}
 				}
 			}
@@ -153,7 +142,7 @@ class Boid {
 		
 		avgVel.mult(1);
 		avgPos.mult(1);
-		avgDiff.mult(1.1);
+		avgDiff.mult(1.2);
 		
 		this.acceleration.add(avgVel);
 		this.acceleration.add(avgPos);

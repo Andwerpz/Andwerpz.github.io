@@ -1,15 +1,37 @@
 @charset "ISO-8859-1";
 
+*{
+	font-family: sans-serif;
+}
+
 html, body {
     margin: 0;
     padding: 0;
 }
 
-#js {
+h1 {
+	color: #FFFFFF;
+	font-family: Georgia;
+}
+
+a {
+	color: #FFFFFF;
+	font-family: Georgia;
+}
+
+
+#banner {
     width: 100%;
     margin: 0; 
     padding: 0; 
     overflow-x: hidden;
+}
+
+#js {
+	width: 60vw;
+	margin-top: 10vh;
+	margin-left: 20vw;
+	overflow-x: hidden;
 }
 
 .page {
@@ -19,20 +41,44 @@ html, body {
 }
 
 .header {
-	font-family: Arial, sans-serif;
 	text-align: center;
 	
 	margin: auto;
-	margin-top: 60px;
-	margin-bottom: 60px;
-	width: 50vw;
+	width: 100vw;
+	height: 30vh;
+	overflow-x: hidden;
+	
+	background-color: #333333;
+}
+
+.header-text {
+	margin: auto;
+	margin-top: 10vh;
+	font-size: 30px;
+	
+
+}
+
+.header-links {
+	margin-left: 7vw;
+	margin-top: 3vh;
+	color: #FFFFFF;
+	font-family: Arial;
+	float: left;
 }
 
 .text {
 	text-align: left;
 	
 	margin: auto;
+	margin-top: 50px;
 	width: 55vw;
+	margin-bottom: 150px;
+}
+
+.text a{
+	font: Arial;
+	color: blue;
 }
 
 .preview {

@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="ISO-8859-1">
+<title>Boids</title>
+<link rel="stylesheet" href="styles/jsdemonstration.css">
+</head>
+
+<script src = "https://cdn.jsdelivr.net/npm/p5@1.2.0/lib/p5.js"></script>
+<script src="http://cdnjs.cloudflare.com/ajax/libs/p5.js/0.5.6/addons/p5.dom.js"></script>
+<script src = "js/boids/sketch.js"></script>
+<script src = "js/boids/boid.js"></script>	
+
+
+
+<div class = "header">
+	<div class = "header-links">
+		<a href = "index.html"><h2><b>Return</b></h2></a>
+	</div>
+	<div class = "header-text">
+		<h1>Boids</h1>
+	</div>
+</div>
+
+<div id = "js">
+</div>
+
+<div class = "text">
+	<p><b>Big thanks to the Coding Train. His video on the subject really allowed me to understand how to put this all together.</b><br><br>
+	This demonstration is based on the <a href = "http://www.red3d.com/cwr/boids/" target = "_blank">boids algorithm by Craig Reynolds.</a> Each boid is simulated independently,
+	and they can only "see" other boids within a certain range of themselves. Every boid has three rules on how to act, given the situation around them. They must first align themselves
+	to the average direction of travel of their neighbors. Second, they must accelerate to the average position of their neighbors, and finally, they must steer to avoid getting too
+	close to them as well. These three simple rules create a rather convincing simulation of birds flocking. </p>
+</div>
+
+</html>
