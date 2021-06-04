@@ -70,7 +70,7 @@ class Boid {
 				for(let test of bucket[i % bucketXLength][j % bucketYLength]){
 					
 					let b = createVector(test.position.x, test.position.y);
-					if(dist(this.position.x, this.position.y, b.x + width, b.y) < dist(this.position.x, this.position.y, b.x, b.y)){
+					/*if(dist(this.position.x, this.position.y, b.x + width, b.y) < dist(this.position.x, this.position.y, b.x, b.y)){
 						//print("PLUS WIDTH");
 						b.x += width;
 					}
@@ -85,7 +85,7 @@ class Boid {
 					else if(dist(this.position.x, this.position.y, b.x, b.y - height) < dist(this.position.x, this.position.y, b.x, b.y)){
 						//print("MINUS HEIGHT");
 						b.y -= height;
-					}
+					}*/
 					let d = dist(this.position.x, this.position.y, b.x, b.y);
 					if(test != this && d <= this.perceptionRadius){
 						count ++;

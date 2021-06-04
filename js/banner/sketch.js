@@ -41,12 +41,12 @@ function draw(){
 		}
 	}
 	
-	let count = 0;
+	//let count = 0;
 	
 	for(let i = 0; i < bucket.length; i++){
 		for(let j = 0; j < bucket[i].length; j++){	
 			for(let boid of bucket[i][j]){
-				count ++;
+				//count ++;
 				boid.flock(bucket); 
 				boid.tick();
 				boid.draw();
@@ -59,7 +59,7 @@ function draw(){
 			}
 		}
 	}
-	print(count);
+	//print(count);
 	textSize(60);
 	stroke(30);
 	textAlign(CENTER);

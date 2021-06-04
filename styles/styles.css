@@ -10,10 +10,7 @@ h1 {
 	font-family: Georgia;
 }
 
-h2 {
-	color: #FFFFFF;
-	font-family: Arial;
-}
+
 
 #banner {
     width: 100%;
@@ -33,6 +30,7 @@ h2 {
 	font-family: Arial, sans-serif;
   	width: 95vw;
   	height: 95vh;
+  	margin-bottom: 100px;
 }
 
 .header {
@@ -62,6 +60,7 @@ h2 {
 	text-align: left;
 	
 	margin: auto;
+	margin-bottom: 100px;
 	width: 55vw;
 }
 
@@ -86,4 +85,22 @@ h2 {
 	margin: auto;
 	border: 1px solid black;
 	float: left
+}
+
+.footer {
+  	bottom:0;
+  	left:0;
+  	width:60vw;
+  	height: 90px;
+  	padding-left: 20vw;
+  	padding-right: 17vw;
+  	margin-bottom: 0;
+  	overflow-x: hidden;
+}
+
+.footer li {
+	list-style: none;
+	display: inline-block;
+	margin: 0 20px;
+	overflow-x: hidden;
 }
