@@ -3,6 +3,7 @@
 html, body {
     margin: 0;
     padding: 0;
+    overflow-x: hidden;
 }
 
 h1 {
@@ -10,13 +11,13 @@ h1 {
 	font-family: Georgia;
 }
 
-
-
 #banner {
+	position:absolute;
     width: 100%;
     margin: 0; 
     padding: 0; 
     overflow-x: hidden;
+    background: 51, 51, 51;
 }
 
 #js {
@@ -28,26 +29,75 @@ h1 {
 
 .page {
 	font-family: Arial, sans-serif;
-  	width: 95vw;
-  	height: 95vh;
-  	margin-bottom: 100px;
+	width: 95vw;
+	margin: auto;
+	margin-top: 30px;
+	margin-bottom: 100px;
+	position: relative;
+}
+
+.nav_links {
+	height: 50px;
+	width: 100vw;
+	margin: auto;
+	margin-top: 15px;
+	display: inline-block;
+	text-align: center;
+	overflow-x: hidden;
+}
+
+.nav_link {
+	display:inline-flex;
+	justify-content: center;
+	align-items: center;
+	width: 20%;
+	height: 40px;
+	border-left: 1px solid black;
+	border-right: 1px solid black;
+}
+
+
+.personal_description {
+	text-align: left;
+	float: auto;
+	width: 60vw;
+	height: 30vh;
+	margin: auto;
+	margin-top: 30px;
+	font-family: Arial, sans-serif;
+}
+
+.personal_description_text { 
+	height: 25vh;
+	width: 35vw;
+	margin: auto;
+	float: right;
+}
+
+.personal_description_image {
+	height: 25vh;
+	margin: auto;
+	border: 1px solid black;
+	float: left;
 }
 
 .header {
+
 	font-family: Arial, sans-serif;
 	text-align: center;
 	
 	margin: auto;
 	width: 100vw;
-	height: 30vh;
+	height: 240px;
 	overflow-x: hidden;
 	
 	background-color: #333333;
 }
 
 .header-text {
-	margin: auto;
-	margin-top: 10vh;
+	position: relative;
+	text-align: center;
+	top: 20%;
 	font-size: 30px;
 }
 
@@ -66,8 +116,8 @@ h1 {
 
 .preview {
 	text-align: left;
-	
-	width: 60vw;	
+	float: auto;
+	width: 60vw;
 	height: 30vh;
 	margin: auto;
 	margin-top: 30px;

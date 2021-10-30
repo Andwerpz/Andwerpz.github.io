@@ -8,7 +8,7 @@ const perceptionRadius = 50;
 
 
 function setup(){
-	cnv = createCanvas(windowWidth, 360);
+	cnv = createCanvas(windowWidth, 240);
 	cnv.parent('banner');
 	//createCanvas(720, 300);
 	for(let i = 0; i < (width / perceptionRadius); i++){
@@ -60,12 +60,12 @@ function draw(){
 		}
 	}
 	//print(count);
-	textSize(60);
-	stroke(30);
-	textAlign(CENTER);
-	textFont('Georgia');
-	fill(255);
-	text('The Website Project', windowWidth / 2, 180);
+	//textSize(60);
+	//stroke(30);
+	//textAlign(CENTER);
+	//textFont('Georgia');
+	//fill(255);
+	//text('The Website Project', windowWidth / 2, 130);
 	bucket = newBucket;
 
 }
