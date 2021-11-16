@@ -11,6 +11,28 @@ h1 {
 	font-family: Georgia;
 }
 
+h2 {
+	color: #000000;
+	font-family: Arial;
+}
+
+p {
+	color: #212121;
+	line-height: 1.4;
+	font-family: Georgia;
+}
+
+a {
+	color: #444444;
+	font-family: Arial;
+	text-decoration: none;
+	font-weight: bold;
+}
+
+a:hover {
+  	color: #999999;
+}
+
 #banner {
 	position:absolute;
     width: 100%;
@@ -28,12 +50,40 @@ h1 {
 }
 
 .page {
-	font-family: Arial, sans-serif;
 	width: 95vw;
-	margin: auto;
-	margin-top: 30px;
-	margin-bottom: 100px;
+	margin: 0 auto;
 	position: relative;
+}
+
+.blog {
+	width: 40vw;
+	position: relative;
+	margin: auto;
+	margin-bottom: 30px;
+}
+
+.blog_image {
+	margin: 30px auto;
+	border: 1px solid black;
+	position: relative;
+	display: block;
+}
+
+.gallery {
+	list-style-type: none;
+	margin: 30px auto;
+	position: relative;
+	width: 60vw;
+	display: block;
+	text-align: center;
+}
+
+.gallery_entry {
+	border: 1px solid black;
+	position: relative;
+	height: 30vh;
+	margin: 20px;
+	display: inline-block;
 }
 
 .nav_links {
@@ -128,6 +178,10 @@ h1 {
 	width: 35vw;
 	margin: auto;
 	float: right;
+}
+
+.preview-text h2{
+	font-family: Arial;
 }
 
 .preview-img {

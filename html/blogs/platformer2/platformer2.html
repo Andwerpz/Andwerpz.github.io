@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="ISO-8859-1">
+<title>The Website Project</title>
+<link rel="stylesheet" href="../../../styles/styles.css">
+</head>
+
+<script src = "https://cdn.jsdelivr.net/npm/p5@1.2.0/lib/p5.js"></script>
+<script src="http://cdnjs.cloudflare.com/ajax/libs/p5.js/0.5.6/addons/p5.dom.js"></script>
+<script src = "../../../js/banner/sketch.js"></script>
+<script src = "../../../js/banner/boid.js"></script>	
+
+
+<div id = "banner">
+</div>
+
+<div class = "header">
+	<div class = "header-text">
+		<h1>Platformer 2</h1>
+	</div>
+</div>
+	
+<div class = "nav_links">
+	<div class = "nav_link">
+		<a href = "../../../small_projects.html">Small Projects</a>
+	</div>
+	<div class = "nav_link">
+		<a href = "../../../index.html">Main Page</a>
+	</div>
+	<div class = "nav_link">
+		<a href = "../../../about_me.html">About Me</a>
+	</div>
+</div>
+
+<div class = "page">
+	<div class = "blog">
+		<p>The inspiration for this project actually came from one of the first projects I've done. When I was first learning about
+			Java graphics, game loops, threads and all that jazz, I made a simple 2D platformer game. It looked something like this:</p>
+			
+		<img class = "blog_image" src = "platfomer1_img.png">
+		
+		<p>Pretty bad right? Well, at the time, I was pretty proud of this one. Took me two weeks of frustration to finally get JFrame to
+		stop spitting out errors, and finally be able to work on the damn thing, and when I finished, I was just glad it was over. But as I got more 
+		knowledgeable about the Java graphics libraries, I started to wonder if I could revisit this project, and give it 
+		a second go a life. Now, the old project was named "Platformer" in my project database, so I thought it fitting to give the 
+		new one the name: "Platformer ++". Very creative, I know. And so began the two month long on and off toil that was the project, 
+		Platformer 2.<p>
+		
+		<br>
+		
+		<h2>Physics</h2>
+		<p>The first thing I wanted to improve over the old one, was the physics. In the previous version, you could do all sorts of weird
+		things: clip through walls, go through the ground, get stuck while walking, even change the camera offset while jumping. Making a 
+		robust physics system was essential if I wanted this game to get off the ground.</p>
+		
+		<p>As a bit of background, both projects were based off a grid tile map. The maps were stored as arrays of ints, with a value of 0 being air,
+		which meant you could walk through it, and any other value (usually) meaning that it was solid and you couldn't walk through it; wood,
+		stone, ect. The player character hitbox was a rectangle, and we could easily check for collision by just checking if any of the 
+		4 points, which made up the boundary of the player, was inside a solid grid cell. It is important to note that the player position
+		wasn't confined to integer values.</p>
+		
+		<p>Now, checking for collision was the easy part. What wasn't was collision resolution. In my old version, I solved this by just 
+		moving the player upwards everytime I saw that it was colliding with the map, a fix that worked reasonably well when stood on the ground, 
+		but the moment the character touches a wall, they get flung up on top of it. </p>
+		
+		<p>The problem with this reactive system is that we don't know where the player came from, and in turn, we don't have the information
+		to accurately resolve the collision. But instead of being reactive to the collision, perhaps, we can be proactive. The player's position
+		and velocity information is readily available to us, so we could calculate the player's future position, and update the velocity 
+		accordingly</p>
+		
+		<img class = "blog_image" src = "predicting_position_demo.png"/>
+		
+		<p>In order to actually implement this, we have to split the velocity into its x and y components. This makes the problem simpler, 
+		because we can deal with the x and y velocities separately, and by doing it this way, it can give us some things for free. For example, 
+		if you have x velocity in the air, it won't be lost upon colliding with the ground. In my project, I chose to process the x velocity
+		first, then deal with the y velocity. </p>
+		
+		<p>Dealing with one component of velocity is rather easy; if the predicted position is colliding with the map, then set all velocity in 
+		that direction to 0, and set the players position so that it is touching the floor / wall it was projected to collide with. We modify
+		the players position so that in case the player has high velocity, the player doesn't hit a 'ghost block' when they are about to collide
+		with something, instead they just snap to the surface they collided with.</p>
+		
+		<p>One more thing to keep note of; when snapping the player to a surface, make sure to leave a 'cushion' between the player and the surface.
+		This is so that when the player moves along the surface, they don't get stuck on the individual tiles that compose the surface.</p>
+		
+		<p>And we're done with the map collision system. Using this relatively robust method of dealing with rectangle collisions in a square tile grid,
+		we can use this to handle any entity collision with the map, be it particles, enemies, or projectiles.</p>
+		
+		<br>
+		
+		<h2>Texturing Tiles</h2>
+		<p>The next thing I wanted to improve was the tile textures. I had decided on a pixel art style, mainly because it's easier to make pixel 
+		art look good, and it takes less memory to load. I quickly made a few textures for stone and dirt by downscaling high res images of their
+		respective materials:</p>
+		
+		<img class = "blog_image" src = "tile_texture_demo.png" width = 500/>
+		
+		<p>It still didn't look too good though. Here, I turned to a well known 2D grid tile based game: Terraria. I noticed in that game, when 
+		a solid tile was next to an air tile, the texture for the solid tile would 'spread out' into the air tile. This way of handling solid / air 
+		boundaries helped with minimizing the straight lines and sharp corners that the grid tiles tended to produce, making the final product look
+		better. Making these side textures was not that hard either, I just sampled pieces of the full tile textures I already made:</p>
+		
+		<img class = "blog_image" src = "tile_side_demo.png" width = 500/>
+		
+		<p>And with the addition of the side textures, the tiles are looking pretty good. Something is still off about them, especially when we
+		have large amounts of tiles next to each other. Specifically, it seems rather odd that we would be able to see every tile at the same brightness,
+		especially the ones that are covered in layers of other tiles. Solving this is rather simple, we can have a brightness level for each tile,
+		defined as the distance between that tile and the closest air tile. To calculate this, we just have to do a floodfill from the air tiles
+		to the solid tiles, keeping track of the minimum distance on each step. Once we have a brightness value for each tile, we can darken each tile 
+		based on it's brightness.</p>
+		
+		<img class = "blog_image" src = "lighting_demo.png" width = 500/>
+		
+		<p>Although this shading does look rather jagged, it's much better than having no shading. Bigger games might do lighting with a much finer
+		grid, or forego the grid entirely and do it smoothly. Either way, it would result in much more smooth lighting, but that's outside the scope
+		of my knowledge.</p>
+		
+		<br>
+		
+		<h2>Gallery and Links</h2>
+		<p>Below are some more screenshots of the game and a 
+		<a href = "https://github.com/Andwerpz/Platformer2" target = "_blank">link</a> to the github repo if you're interested.</p>
+		
+		
+	</div>
+	
+	<div class = "gallery">
+		<img class = "gallery_entry" src = "mellow_meadows.png"/>
+		<img class = "gallery_entry" src = "parkour_level.png"/>
+		<img class = "gallery_entry" src = "rocket_launcher_demo.png"/>
+		<img class = "gallery_entry" src = "weapon sprites.png"/>
+		<img class = "gallery_entry" src = "multishot_demo.png"/>
+	</div>
+		
+
+</div>
+
+</html>
