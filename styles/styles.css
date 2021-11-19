@@ -170,7 +170,9 @@ a:hover {
 	width: 60vw;
 	height: 30vh;
 	margin: auto;
-	margin-top: 30px;
+	margin-top: 50px;
+	margin-bottom: 50px;
+	border-bottom: 1px solid black;
 }
 
 .preview-text { 
