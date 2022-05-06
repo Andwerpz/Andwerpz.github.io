@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="ISO-8859-1">
+<title>The Website Project</title>
+<link rel="stylesheet" href="../../../styles/styles.css">
+</head>
+
+<script src = "https://cdn.jsdelivr.net/npm/p5@1.2.0/lib/p5.js"></script>
+<script src="http://cdnjs.cloudflare.com/ajax/libs/p5.js/0.5.6/addons/p5.dom.js"></script>
+<script src = "../../../js/banner/sketch.js"></script>
+<script src = "../../../js/banner/boid.js"></script>	
+
+
+<div id = "banner">
+</div>
+
+<div class = "header">
+	<div class = "header-text">
+		<h1>Roguelike</h1>
+	</div>
+</div>
+	
+<div class = "nav_links">
+	<div class = "nav_link">
+		<a href = "../../../small_projects.html">Small Projects</a>
+	</div>
+	<div class = "nav_link">
+		<a href = "../../../index.html">Main Page</a>
+	</div>
+	<div class = "nav_link">
+		<a href = "../../../about_me.html">About Me</a>
+	</div>
+</div>
+
+<div class = "page">
+	<div class = "blog">
+		
+		<p>My second platformer project was great and all, but I felt like the idea of making a 2D bullet hell game with gravity was
+		inherently flawed, since the bullet hell aspect didn't mesh at all with the gravity mechanic. There was probably a way to
+		solve this in an interesting and creative way, but after a few months, I had gotten burnt out. The foundational structure
+		of the game also wasn't too great; adding weapons and enemies was a pain, as well as importing the textures for said 
+		weapons and enemies. </p>
+		
+		<p>Long story short, I had learned alot while working on Platformer 2, and I decided it would be a good idea to start with a 
+		clean slate to try to put some things I learned to use. As I still wanted to make a bullet hell type game, I axed gravity 
+		(Sorry, Newton), and decided to make a top down game instead, aptly named: Roguelike.</p>
+		
+		<br>
+		
+		<h2>Textures</h2>
+		<p>One of the major things that bugged me while working on Platformer 2, was the look of the game, namely the textures. Although
+		the ground in Platformer 2 looked ok, it couldn't really stand on its own without lighting, and for the player, I completely 
+		gave up and just drew a placeholder rectangle over the environment hitbox. So the first thing to do was to make a player sprite. </p>
+		
+		<!-- player gif -->
+		<figure>
+			<img src="knight_idle.gif" width="20%"/>
+			<figcaption>It turned out pretty good</figcaption>
+		</figure>
+		
+		<p>Since the game is going to be top down, relying on lighting to make the floor textures look good is not going to work, as the player is always 
+		going to be able to see all of the floor at once. Thus I also made a few floor textures.</p>
+		
+		<!-- floor textures img -->
+		<figure>
+			<img src="floor_tiles_demo.png"/>
+		</figure>
+		
+		<p>I made differently sized tiles to make the floor more varied as you walked across. As my maps still had array based storage, 
+		tiling the floor with these textures was very easy. Putting it all together looked something like this: </p>
+		
+		<!-- texture demo img -->
+		<figure>
+			<img src="texture_demo.png"/>
+		</figure>
+		
+		<h2>Animations</h2>
+		<p>Another thing I wanted to improve on was handling animations of players and enemies. Before, in every enemy class I had a mess of flags 
+		and logic to determine which animation played. Obviously, this wasn't sustainable, and so I reinvented the wheel and came up with state-based 
+		animations. </p>
+		
+		<p>Instead of flags, we can use a state variable to control the behaviour of enemies. Each state, such as Walking, Idle, and Attack, can have
+		conditions to transition to other states, such as a timer, or random chance. And we can also use these states to know when to draw each animation. 
+		
+		<!-- grunt animations -->
+		<div class="gallery">
+			<figure>
+				<img src="grunt_idle.gif"/>
+				<figcaption>Idle</figcaption>
+			</figure>
+			<figure>
+				<img src="grunt_move.gif"/>
+				<figcaption>Moving</figcaption>
+			</figure>
+			<figure>
+				<img src="grunt_attack.gif"/>
+				<figcaption>Attack</figcaption>
+			</figure>
+		</div>
+		
+		<p>The upside to handling enemy behaviour with states is that different enemies become quite similar to program; they each can move, and attack, 
+		and be idle. This meant that I could throw out all the spaghetti I had rotting in my fridge, and I didn't need to write as much boilerplate code 
+		as I had to before. We also get stuff like animation handling for free, and the code for drawing the animation was completely reusable from enemy 
+		to enemy. In fact, I could even reuse the code for drawing enemy animations to draw the coins spinning on the ground.</p>
+		
+		<h2>Map Generation</h2>
+		<p>Initially, I wanted to create an "Enter the Gungeon" style map, with differently shaped rooms, winding hallways, and secret doors. 
+		But after a few days of development, I had to face the fact that I simply didn't have enough experience with map generation to 
+		construct such a system, nor did I have the time to design lots of different rooms to make the map varied enough. So instead, 
+		I opted to have perfectly square rooms aligned to a grid, and focus on the gameplay progression of each level first. </p>
+		
+		<p>There would be a total of 4 types of rooms in each level, Spawn, Enemy, Reward, and Exit. I wanted the maps to satisfy a few requirements: </p>
+		
+		<ul>
+			<li>There should only be one Start and Exit room. </li>
+			<li>There must be a way to get from the Start room to the Exit room.</li>
+			<li>The player must have to travel through 2 Enemy rooms to get to the Exit room. </li>
+			<li>Each Enemy room must be connected to a Reward room</li>
+		</ul>
+		
+		<p>The most straightforwards approach would be to place a Spawn room, then randomly traverse 2 rooms away from the spawn to be the Enemy rooms. Then 
+		traverse one more room to be the Exit room. And that is pretty much exactly what I did. Onto each Enemy room, we can place an adjacent Reward room. And
+		if somehow, there isn't any space to place a room, we can just scrap the map and try again. </p>
+		
+		<!-- minimap img -->
+		<figure>
+			<img src="minimap_demo.png">
+			<figcaption>Annotated picture of in-game minimap.</figcaption>
+		</figure>
+		
+		<h2>Conclusion</h2>
+		<p>As before, <a href="https://github.com/Andwerpz/Roguelike">here</a> is the link to the repo if you're interested. </p>
+		
+		<h2>Gallery</h2>
+		<div class="gallery">
+			<figure>
+				<img src="roguelike_oo_a_hud.png" width="100%">
+				<figcaption>Ooo, look, a hud</figcaption>
+			</figure>
+			<figure>
+				<img src="roguelike_lobby.png" width="100%">
+				<figcaption>Lobby room</figcaption>
+			</figure>
+			<figure>
+				<img src="roguelike_a_reward.png">
+				<figcaption>Reward Chest</figcaption>
+			</figure>
+			<figure>
+				<img src="roguelike_exit_door.png">
+				<figcaption>Exit Door</figcaption>
+			</figure>
+		</div>
+		
+	</div>
+</div>
+
+</html>

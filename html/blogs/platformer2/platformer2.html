@@ -37,8 +37,10 @@
 	<div class = "blog">
 		<p>The inspiration for this project actually came from one of the first projects I've done. When I was first learning about
 			Java graphics, game loops, threads and all that jazz, I made a simple 2D platformer game. It looked something like this:</p>
-			
-		<img class = "blog_image" src = "platfomer1_img.png">
+		
+		<figure>
+			<img class = "blog_image" src = "platfomer1_img.png">
+		</figure>
 		
 		<p>Pretty bad right? Well, at the time, I was pretty proud of this one. Took me two weeks of frustration to finally get JFrame to
 		stop spitting out errors, and finally be able to work on the damn thing, and when I finished, I was just glad it was over. But as I got more 
@@ -69,7 +71,9 @@
 		and velocity information is readily available to us, so we could calculate the player's future position, and update the velocity 
 		accordingly</p>
 		
-		<img class = "blog_image" src = "predicting_position_demo.png"/>
+		<figure>
+			<img src = "predicting_position_demo.png"/>
+		</figure>
 		
 		<p>In order to actually implement this, we have to split the velocity into its x and y components. This makes the problem simpler, 
 		because we can deal with the x and y velocities separately, and by doing it this way, it can give us some things for free. For example, 
@@ -94,14 +98,18 @@
 		art look good, and it takes less memory to load. I quickly made a few textures for stone and dirt by downscaling high res images of their
 		respective materials:</p>
 		
-		<img class = "blog_image" src = "tile_texture_demo.png" width = 500/>
+		<figure>
+			<img class = "blog_image" src = "tile_texture_demo.png" width = 500/>
+		</figure>
 		
 		<p>It still didn't look too good though. Here, I turned to a well known 2D grid tile based game: Terraria. I noticed in that game, when 
 		a solid tile was next to an air tile, the texture for the solid tile would 'spread out' into the air tile. This way of handling solid / air 
 		boundaries helped with minimizing the straight lines and sharp corners that the grid tiles tended to produce, making the final product look
 		better. Making these side textures was not that hard either, I just sampled pieces of the full tile textures I already made:</p>
 		
-		<img class = "blog_image" src = "tile_side_demo.png" width = 500/>
+		<figure>
+			<img class = "blog_image" src = "tile_side_demo.png" width = 500/>
+		</figure>
 		
 		<p>And with the addition of the side textures, the tiles are looking pretty good. Something is still off about them, especially when we
 		have large amounts of tiles next to each other. Specifically, it seems rather odd that we would be able to see every tile at the same brightness,
@@ -110,7 +118,9 @@
 		to the solid tiles, keeping track of the minimum distance on each step. Once we have a brightness value for each tile, we can darken each tile 
 		based on it's brightness.</p>
 		
-		<img class = "blog_image" src = "lighting_demo.png" width = 500/>
+		<figure>
+			<img class = "blog_image" src = "lighting_demo.png" width = 500/>
+		</figure>
 		
 		<p>Although this shading does look rather jagged, it's much better than having no shading. Bigger games might do lighting with a much finer
 		grid, or forego the grid entirely and do it smoothly. Either way, it would result in much more smooth lighting, but that's outside the scope
@@ -122,16 +132,16 @@
 		<p>Below are some more screenshots of the game and a 
 		<a href = "https://github.com/Andwerpz/Platformer2" target = "_blank">link</a> to the github repo if you're interested.</p>
 		
-		
+		<div class = "gallery">
+			<img class = "gallery_entry" src = "mellow_meadows.png"/>
+			<img class = "gallery_entry" src = "parkour_level.png"/>
+			<img class = "gallery_entry" src = "rocket_launcher_demo.png"/>
+			<img class = "gallery_entry" src = "weapon sprites.png"/>
+			<img class = "gallery_entry" src = "multishot_demo.png"/>
+		</div>
 	</div>
 	
-	<div class = "gallery">
-		<img class = "gallery_entry" src = "mellow_meadows.png"/>
-		<img class = "gallery_entry" src = "parkour_level.png"/>
-		<img class = "gallery_entry" src = "rocket_launcher_demo.png"/>
-		<img class = "gallery_entry" src = "weapon sprites.png"/>
-		<img class = "gallery_entry" src = "multishot_demo.png"/>
-	</div>
+	
 		
 
 </div>
