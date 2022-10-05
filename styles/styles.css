@@ -52,11 +52,14 @@ img {
 	margin: auto;
 	text-align: center;
 	
-	image-rendering: pixelated;
 	position: relative;
 	display: inline-block;
 	min-width: 10vw;
 	max-width: 100%;
+}
+
+img.pixelart{
+	image-rendering: pixelated;
 }
 
 a:hover {
