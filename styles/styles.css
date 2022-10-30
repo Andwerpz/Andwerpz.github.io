@@ -3,12 +3,16 @@
 html, body {
     margin: 0;
     padding: 0;
-    overflow-x: hidden;
+ 	scroll-behavior: smooth;
+}
+
+body {
+	overflow-x: hidden;
 }
 
 h1 {
 	color: #FFFFFF;
-	font-family: Georgia;
+	font-family: Arial;
 }
 
 h2 {
@@ -16,16 +20,23 @@ h2 {
 	font-family: Arial;
 }
 
+h3 {
+	color: #000000;
+	font-family: Arial;
+}
+
 p {
 	color: #212121;
 	line-height: 1.4;
-	font-family: Georgia;
+	font-family: Arial;
+	font-size: 14px;
 }
 
 li {
 	color: #212121;
 	line-height: 1.4;
-	font-family: Georgia;
+	font-family: Arial;
+	font-size: 14px;
 }
 
 a {
@@ -37,7 +48,7 @@ a {
 
 figcaption {
 	color: #212121;
-	font-family: Georgia;
+	font-family: Arial;
 	font-size: 12px;
 	
 	margin-top: 5px;
@@ -54,16 +65,37 @@ img {
 	
 	position: relative;
 	display: inline-block;
-	min-width: 10vw;
-	max-width: 100%;
 }
 
 img.pixelart{
 	image-rendering: pixelated;
 }
 
+.preview img {
+	margin: auto;
+	float: left;
+	padding: 5px;
+	object-fit: contain;
+	width: 30%;
+	height: 25vh;
+}
+
+.sidebar {
+	position: -webkit-sticky;
+	position: sticky;
+	top: 5vh;
+	left: 17vh;
+	padding: 5px;
+	line-height: 150%;
+	border: 1px dashed black;
+	float:left;
+	margin-top: 2vh;
+	font-size: 17px;
+	z-index: 1;
+}
+
 a:hover {
-  	color: #999999;
+  	opacity: 0.5;
 }
 
 #banner {
@@ -95,7 +127,7 @@ a:hover {
 	margin-bottom: 30px;
 }
 
-.blog figure{
+.blog figure {
 	margin: auto;
 	padding: 5px;
 	position: relative;
@@ -129,6 +161,7 @@ a:hover {
 	display: inline-block;
 	text-align: center;
 	overflow-x: hidden;
+	font-size: 20px;
 }
 
 .nav_link {
@@ -167,7 +200,6 @@ a:hover {
 }
 
 .header {
-
 	font-family: Arial, sans-serif;
 	text-align: center;
 	
@@ -208,23 +240,21 @@ a:hover {
 	margin-top: 50px;
 	margin-bottom: 50px;
 	border-bottom: 1px solid black;
+	cursor: pointer;
+}
+
+.preview:hover {
+	opacity: 0.5;
 }
 
 .preview-text { 
-	height: 25vh;
-	width: 35vw;
+	width: 37vw;
 	margin: auto;
 	float: right;
 }
 
 .preview-text h2{
 	font-family: Arial;
-}
-
-.preview-img {
-	height: 25vh;
-	margin: auto;
-	float: left;
 }
 
 .footer {

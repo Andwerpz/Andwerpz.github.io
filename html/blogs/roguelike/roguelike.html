@@ -33,6 +33,14 @@
 	</div>
 </div>
 
+<div class = "sidebar">
+	<a href = "#Textures">Textures</a> <br>
+	<a href = "#Animations">Animations</a> <br>
+	<a href = "#MapGeneration">Map Generation</a> <br>
+	<a href = "#Conclusion">Conclusion</a> <br>
+	<a href = "#Gallery">Gallery</a> <br>
+</div>
+
 <div class = "page">
 	<div class = "blog">
 		
@@ -43,12 +51,12 @@
 		weapons and enemies. </p>
 		
 		<p>Long story short, I had learned alot while working on Platformer 2, and I decided it would be a good idea to start with a 
-		clean slate to try to put some things I learned to use. As I still wanted to make a bullet hell type game, I axed gravity 
-		(Sorry, Newton), and decided to make a top down game instead, aptly named: Roguelike.</p>
+		clean slate to try to put some things I learned to use. As I still wanted to make a bullet hell type game, 
+		and decided to make a top down game instead, aptly named: Roguelike.</p>
 		
 		<br>
 		
-		<h2>Textures</h2>
+		<h2 id="Textures">Textures</h2>
 		<p>One of the major things that bugged me while working on Platformer 2, was the look of the game, namely the textures. Although
 		the ground in Platformer 2 looked ok, it couldn't really stand on its own without lighting, and for the player, I completely 
 		gave up and just drew a placeholder rectangle over the environment hitbox. So the first thing to do was to make a player sprite. </p>
@@ -75,7 +83,7 @@
 			<img src="texture_demo.png"/>
 		</figure>
 		
-		<h2>Animations</h2>
+		<h2 id="Animations">Animations</h2>
 		<p>Another thing I wanted to improve on was handling animations of players and enemies. Before, in every enemy class I had a mess of flags 
 		and logic to determine which animation played. Obviously, this wasn't sustainable, and so I reinvented the wheel and came up with state-based 
 		animations. </p>
@@ -86,25 +94,25 @@
 		<!-- grunt animations -->
 		<div class="gallery">
 			<figure>
-				<img class="pixelart" src="grunt_idle.gif"/>
+				<img class="pixelart" src="grunt_idle.gif" width="150vw"/>
 				<figcaption>Idle</figcaption>
 			</figure>
 			<figure>
-				<img class="pixelart" src="grunt_move.gif"/>
+				<img class="pixelart" src="grunt_move.gif" width="150vw"/>
 				<figcaption>Moving</figcaption>
 			</figure>
 			<figure>
-				<img class="pixelart" src="grunt_attack.gif"/>
+				<img class="pixelart" src="grunt_attack.gif" width="150vw"/>
 				<figcaption>Attack</figcaption>
 			</figure>
 		</div>
 		
 		<p>The upside to handling enemy behaviour with states is that different enemies become quite similar to program; they each can move, and attack, 
-		and be idle. This meant that I could throw out all the spaghetti I had rotting in my fridge, and I didn't need to write as much boilerplate code 
+		and be idle. This meant that I could throw out all the spaghetti code that used to handle enemy behaviour, and I don't need to write as much boilerplate code 
 		as I had to before. We also get stuff like animation handling for free, and the code for drawing the animation was completely reusable from enemy 
 		to enemy. In fact, I could even reuse the code for drawing enemy animations to draw the coins spinning on the ground.</p>
 		
-		<h2>Map Generation</h2>
+		<h2 id="MapGeneration">Map Generation</h2>
 		<p>Initially, I wanted to create an "Enter the Gungeon" style map, with differently shaped rooms, winding hallways, and secret doors. 
 		But after a few days of development, I had to face the fact that I simply didn't have enough experience with map generation to 
 		construct such a system, nor did I have the time to design lots of different rooms to make the map varied enough. So instead, 
@@ -129,10 +137,10 @@
 			<figcaption>Annotated picture of in-game minimap.</figcaption>
 		</figure>
 		
-		<h2>Conclusion</h2>
+		<h2 id="Conclusion">Conclusion</h2>
 		<p>As before, <a href="https://github.com/Andwerpz/Roguelike">here</a> is the link to the repo if you're interested. </p>
 		
-		<h2>Gallery</h2>
+		<h2 id="Gallery">Gallery</h2>
 		<div class="gallery">
 			<figure>
 				<img src="roguelike_oo_a_hud.png" width="100%">

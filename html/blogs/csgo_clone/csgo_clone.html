@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="ISO-8859-1">
+<title>The Website Project</title>
+<link rel="stylesheet" href="../../../styles/styles.css">
+</head>
+
+<script src = "https://cdn.jsdelivr.net/npm/p5@1.2.0/lib/p5.js"></script>
+<script src="http://cdnjs.cloudflare.com/ajax/libs/p5.js/0.5.6/addons/p5.dom.js"></script>
+<script src = "../../../js/banner/sketch.js"></script>
+<script src = "../../../js/banner/boid.js"></script>	
+
+
+<div id = "banner">
+</div>
+
+<div class = "header">
+	<div class = "header-text">
+		<h1>CSGO Clone</h1>
+	</div>
+</div>
+	
+<div class = "nav_links">
+	<div class = "nav_link">
+		<a href = "../../../small_projects.html">Small Projects</a>
+	</div>
+	<div class = "nav_link">
+		<a href = "../../../index.html">Main Page</a>
+	</div>
+	<div class = "nav_link">
+		<a href = "../../../about_me.html">About Me</a>
+	</div>
+</div>
+
+<div class = "sidebar">
+	<a href = "#ScreenSpaceDecals">Screen Space Decals</a> <br>
+	<a href = "#Multiplayer">Multiplayer</a> <br>
+	<a href = "#UserInterface">User Interface</a> <br>
+	<a href = "#Links">Links</a> <br>
+</div>
+
+<div class = "page">
+	<div class = "blog">
+		<p>A not so complete recreation of CSGO, as the only gamemode currently available is deathmatch. Hopefully I can
+		develop this engine further to make better stuff in the future.</p>
+		
+		<h2 id="ScreenSpaceDecals">Screen Space Decals</h2>
+		<p>I wanted decals for two very important things: bullet holes and blood splatters. They would both serve the gameplay, 
+		the former telling you where your shots are landing, and the latter telling you if you hit your opponent. And since I had
+		a deferred rendering pipeline, I decided that screen space decals would be the best choice.</p>
+		
+		<p>In a deferred rendering pipeline, when you draw an object, you don't draw the finished image to the screen directly, 
+		instead you draw out information about the object to each pixel on the screen, stuff like color, position, and surface normal. 
+		After that, you do a few passes over the information, such as lighting, to process it into the final image.</p>
+		
+		<div class = "gallery">
+			<figure>
+				<img src="color_buffer_demo.png" width = 90%>
+				<figcaption>Color Buffer</figcaption>
+			</figure>
+			
+			<figure>
+				<img src="position_buffer_demo.png" width = 90%>
+				<figcaption>Position Buffer</figcaption>
+			</figure>
+			
+			<figure>
+				<img src="normal_buffer_demo.png" width = 90%>
+				<figcaption>Normal Buffer</figcaption>
+			</figure>
+			
+			<figure>
+				<img src="final_result.png" width = 90%>
+				<figcaption>Final Result</figcaption>
+			</figure>
+		</div>
+		
+		
+		<p>While a traditional decal would construct a mesh conforming to the surface that it sits on, screen space decals take 
+		advantage of the information in the position buffer to layer the decal on top of whatever was already drawn.</p>
+		
+		<h3>How do they work?</h3>
+		<p>First, we need to re-shade the pixels that are part of the decal. To do this, we can simply make a box around the decal area.</p>
+		
+		<figure>
+			<img src="decal_bounding_box.png" width="50%">
+			<figcaption>It also sticks out behind the wall</figcaption>
+		</figure>
+		
+		<p>The next step is to filter out the parts of the box that stick out of the wall, leaving only the part of the box that conforms
+		to the wall. We can do this by checking for each shaded pixel whether or not it is inside the decal bounding box. Because checking 
+		whether a point is inside an arbitrary rectangular prism is non-trivial, and we'll have to do this step later anyways, we can 
+		invert the model matrix of the box and just check the point in the box's model space.</p>
+		
+		<figure>
+			<img src="decal_filtered_bounding_box.png" width="50%">
+		</figure>
+		
+		<p>Now since we want to actually draw a texture instead of a white rectangle, we can use the x-y coordinates of the pixels
+		in the box's model space as the texture coordinates that we sample the decal texture with.</p>
+		
+		<figure>
+			<img src="decal_rendered.png" width="50%">
+		</figure>
+		
+		<h3>One Problem</h3>
+		<p>Since we decide which pixels to re-shade using a bounding box, if the camera is too close, then backface culling will stop
+		us from rendering the decal. To fix this, just use frontface culling if the camera intersects the box. The problem with this
+		solution is that you can't do this with instanced rendering of decals because the culling direction has to be the same for all 
+		instanced meshes.</p>
+		
+		<br>
+		
+		<h2 id="Multiplayer">Multiplayer</h2>
+		<p>Implementing multiplayer was rather straightforward, but since this was my first time doing any networking in general, 
+		I'll write it here anyways. This won't be a comprehensive explanation, just some thoughts on multiplayer and networking.</p>
+		
+		<p>In java, networking can be done with the <code>ServerSocket</code> and <code>Socket</code> classes. A <code>Socket</code> has a 
+		<code>DataInputStream</code> and <code>DataOutputStream</code>, which function identically to input streams made from a file, except 
+		the file only ends when the client disconnects from the server. Since the function that reads information from the input stream waits 
+		until information is available, you need to designate a separate thread to listen to each client socket for updates, as doing it in 
+		the same loop as writing information to the client will cause the tickspeed of the server to be proportional to the highest latency 
+		of any client.</p>
+		
+		<p>The basic idea is that the host or the server has the 'true' state of the world, and it sends updates to the players or clients
+		telling them where everything is, for example, all the positions of other players. Using the information received from the server, 
+		the clients then can render the scene according to their delayed perspective of the world. Clients can also send updates to the server,
+		letting it know that they moved, or fired their gun.</p>
+		
+		<h3>Issues</h3>
+		
+		<p>For this project, many things that should be double checked on the server, such as hit registration, and movement, aren't. This
+		leads to a problem where players can deal damage to each other after they have died, because player A's bullet could still be in 
+		transmission to the server, when the server processes that player A has died. To solve this, every time a player respawns, I 
+		assign them with a new unique life id, and communicate it to the rest of the clients. Each bullet will be packaged with the life
+		id of the person it originated from, and the person it hit. If the life ids don't match up with the current ids on the server, then
+		that bullet is discarded.</p>
+		
+		<p>Still, this solution doesn't completely make the game fair. If Alice has a lower latency connection to the server than Bob, then 
+		Alice will have an inherent advantage over Bob due to the fact that any updates that Alice sends to the server will be processed first. 
+		For example, if they both shoot each other in the exact same moment, then Alice's bullet will be processed by the server first, 
+		thus killing Bob before the server receives the update that he is shooting.</p>
+		
+		<p>Another issue is that the movement of other players isn't very smooth. The root of this problem is that the server only updates clients
+		with the position of each player, and not the velocity. If the clients were supplied with velocity as well, then they could interpolate
+		the position of other players in between of the updates they receive.</p>
+		
+		<br>
+		
+		<h2 id = "UserInterface">User Interface</h2>
+		<p>Since I'm working with OpenGL, which is a 3D graphics library, we have to find a way to render 2D images onto the screen. 
+		To do this, instead of rendering things with a perspective projection matrix, we can use an orthographic projection matrix. The
+		main difference between the two is that objects farther away from the camera with a projection matrix will appear smaller, while
+		it won't change with orthographic projection, perfect for rendering flat 2D images onto the screen. This also gives us control 
+		over the layering of ui elements, as we just need to assign a larger z value to the items on top.</p>
+		
+		<figure>
+			<img src="pers_vs_ortho.png" width="90%">
+		</figure>
+		
+		<h3>Text Rendering</h3>
+		<p>Because LWJGL doesn't have native support for rendering text, I had to come up with my own solution. Using Java FX, you can write
+		text to an image, which then you can use as a texture on a 2D quad to render to the screen using the 3D pipeline.</p>
+		
+		<p>Next, we have to figure out how to align the text. Fonts are defined using a baseline, which is the bottom of most characters, 
+		and maximum ascent and descent, which is the top and bottom of all characters in the font. Because in many fonts, there are some
+		characters that stick out much more than other characters, just using the maximum ascent and descent values don't work. Instead, we
+		want to sample the height of the commonly used characters, and use that to align the text.</p>
+		
+		<figure>
+			<img src="text_alignment.png" width=90%>
+			<figcaption>Notice how the max ascent line, the top black horizontal line, is way above the sample text. The blue box is
+			the generated bounding box for the sample text.</figcaption>
+		</figure>
+		
+		<h3>UI Element Alignment</h3>
+		<p>The second problem is the dynamic alignment of ui elements. To solve this, I came up with a 2 step system, first generating a 
+		reference coordinate, then aligning the element around the reference coordinate.</p>
+		
+		<figure>
+			<img src="ui_alignment.png" width=90%>
+		</figure>
+		
+		<p>Every time the window is resized, an update is triggered that first re-generates all of the framebuffers needed for rendering, 
+		then re-aligns all ui elements according to the new window size.</p>
+		
+		<br>
+		
+		<h2 id="Links">Links</h2>
+		<p>Here is the <a href="https://github.com/Andwerpz/CSGOClone">link</a> to the github repo.</p>
+		 
+	</div>
+</div>
+
+</html>
