@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="ISO-8859-1">
+<title>The Website Project</title>
+<link rel="stylesheet" href="../../../styles/styles.css">
+</head>
+
+<script src = "https://cdn.jsdelivr.net/npm/p5@1.2.0/lib/p5.js"></script>
+<script src="http://cdnjs.cloudflare.com/ajax/libs/p5.js/0.5.6/addons/p5.dom.js"></script>
+<script src = "../../../js/banner/sketch.js"></script>
+<script src = "../../../js/banner/boid.js"></script>	
+
+
+<div id = "banner">
+</div>
+
+<div class = "header">
+	<div class = "header-text">
+		<h1>Procedural Planets</h1>
+	</div>
+</div>
+	
+<div class = "nav_links">
+	<div class = "nav_link">
+		<a href = "../../../small_projects.html">Small Projects</a>
+	</div>
+	<div class = "nav_link">
+		<a href = "../../../index.html">Main Page</a>
+	</div>
+	<div class = "nav_link">
+		<a href = "../../../about_me.html">About Me</a>
+	</div>
+</div>
+
+<div class = "sidebar">
+	<a href = "#TerrainGeneration">Terrain Generation</a> <br>
+	<a href = "#RenderingTheOcean">Rendering the Ocean</a> <br>
+	<a href = "#AtmosphericScattering">Atmospheric Scattering</a> <br>
+	<a href = "#Links">Links</a> <br>
+</div>
+
+<div class = "page">
+	<div class = "blog">
+		<h2 id="TerrainGeneration">Terrain Generation</h2>
+		<h3>Making a Sphere</h3>
+		<p>Since we want to generate planets, a good place to start is generating a sphere. Probably the most obvious
+		way is to use rotations along the y and x axis to create rings of points around the sphere, also known as a UV sphere,
+		but the problem with this type of sphere is that you get a concentrated amount of triangles at the poles of the sphere, 
+		and relatively few around the equator. </p>
+		
+		<p>Another sphere to consider is the ico-sphere, where you first make an icosahedron and then normalize it's vertices 
+		to create a sphere. The problem is that in order to increase the amount of triangles / detail of the sphere, you 
+		have to recursively subdivide the faces, meaning that every time you want to increase the detail, you need to multiply 
+		the amount of triangles by 4, making it so that we can't finely control the quality.</p>
+		
+		<figure>
+			<img src="icosphere_subdivisions.png">
+		</figure>
+		
+		<p>The sphere I ended up using is called the cube-sphere. Like the ico-sphere, you make the sphere by starting with a 
+		cube, and normalizing the vertices, but with a cube, you can subdivide each cube face into a grid of arbitrary 
+		dimensions. (Come to think of it, you could probably do the same thing with an icosahedron face, but the math would
+		be uglier due to the axes not being 90 degrees apart.)</p>
+		
+		<figure>
+			<img src="uv_vs_cube_sphere.png">
+			<figcaption>UV sphere on the left and cube sphere on the right.</figcaption>
+		</figure>
+		
+		<h3>Generating Terrain using Noise</h3>
+		<p>Once we have our sphere, we can distort it to produce terrain. The idea is that the distance from the center for
+		each vertex is affected by a 3D noise function, producing little hills. We can sample the noise for each vertex
+		from it's original normalized position on the sphere.</p>
+		
+		<figure>
+			<img src="terrain_little_hills.png" width="90%">
+		</figure>
+		
+		<p>You can manipulate the outputs of the noise functions to create unique looking terrain features. For example, taking
+		the absolute value of the noise can create a coral looking ball, and if you use another function as a mask, you can
+		generate mountain ranges. </p>
+		
+		<figure>
+			<img src="terrain_abs_value.png" width="90%">
+			<figcaption>Taking absolute value and then inverting the noise produces ridges</figcaption>
+		</figure>
+		
+		<p>Another good way to make a planet feel more alien is to warp the inputs of the noise function with another function. 
+		Doing this will 'stretch' parts of the terrain, leading to overall more interesting planets. </p>
+		
+		<figure>
+			<img src="terrain_warping.png" width="90%">
+		</figure>
+		
+		<h3>Height and Slope Based Coloring</h3>
+		<p>In the fragment shader, we can color each fragment based on it's elevation and steepness, which can be determined 
+		using the dot product of the fragment normal and direction vector from the center of the sphere. I used simplex noise
+		to add some color variations to the grass. </p>
+		
+		<figure>
+			<img src="terrain_coloring.png" width="90%">
+		</figure>
+		
+		<h2 id="RenderingTheOcean">Rendering the Ocean</h2>
+		<p>Instead of making another sphere to render the ocean, I decided that I would render it as a post processing
+		effect. First, we had to make a ray-sphere intersection algorithm. </p>
+		
+		<pre>
+			<code>
+//returns the length of intersection between a ray and a sphere
+float raySphereLength(vec3 rayOrigin, vec3 rayDir, vec3 spherePos, float sphereRadius) {
+	vec3 rayToSphere = spherePos - rayOrigin;
+	vec3 toClosestPoint = rayDir * dot(rayDir, rayToSphere);
+	float sphereRayDist = length(spherePos - (rayOrigin + toClosestPoint));
+	
+	if(sphereRayDist > sphereRadius){
+		//they don't intersect
+		return 0;
+	}	
+	
+	float intersectionDistRadius = sqrt(sphereRadius * sphereRadius - sphereRayDist * sphereRayDist);
+	
+	vec3 toNear = toClosestPoint - rayDir * intersectionDistRadius;
+	vec3 toFar = toClosestPoint + rayDir * intersectionDistRadius;
+	
+	float distToNear = dot(toNear, rayDir);
+	float distToFar = dot(toFar, rayDir);
+	
+	//near and far intersection points can be behind the ray origin, so we just clamp them to 0
+	distToNear = max(distToNear, 0);
+	distToFar = max(distToFar, 0);
+	
+	return distToFar - distToNear;
+}
+			</code>
+		</pre>
+		
+		<p>Cool, now we should be able to figure out whether a given fragment intersects with a sphere passed in as a
+		uniform. We can find the direction vector for each fragment by rendering a unit cube around the camera, and 
+		normalizing the position vectors in camera space. I just repurposed my skybox shader to do this. </p>
+		
+		<figure>
+			<img src="ocean_ray_intersect.png" width = 90%>
+		</figure>
+		
+		<p>Ok, since I'm using a deferred rendering pipeline, we can actually move ocean rendering to before the lighting 
+		step, so we can have diffuse lighting and specular highlights for free. This does require us to write the per fragment
+		normal and position vectors for the sphere into the gBuffer. The position vectors are given to us from the ray-sphere
+		intersection algorithm, and the normal for the fragment is simply the vector from the center of the sphere to the 
+		intersection point.</p>
+		
+		<figure>
+			<img src="ocean_diffuse.png" width = 90%>
+		</figure>
+		
+		<p>Putting the water sphere and the planet together gives us a neat looking blue ocean. </p>
+		
+		<figure>
+			<img src="ocean_with_planet.png" width = 90%>
+			<figcaption>Make sure to do depth testing or else the ocean will always render above the planet</figcaption>
+		</figure>
+		
+		<p>Next, since water is usually not opaque, we want to blend the water color with the ground color of the planet, 
+		with shallower water letting more surface color through. First we can find the closest planet surface along the fragment
+		view direction vector by sampling the gBuffer depth texture. Comparing this with the ocean sphere intersection vector
+		will give us the depth of the ocean for that fragment. </p>
+		
+		<figure>
+			<img src="ocean_depth.png" width = 90%>
+			<figcaption>Black is shallow water and white is deep water</figcaption>
+		</figure>
+		
+		<p>Since the amount of light passing through water exponentially decreases in relation to length of water travelled
+		through, we can weight the original surface color with respect to e to the negative power of ocean depth. </p>
+		
+		<figure>
+			<img src="ocean_color_blending.png" width = 90%>
+		</figure>
+		
+		<p>Although the ocean looks pretty good right now, it's just a little too flat to look like water. We can remedy this
+		by adding some normal mapping. One problem in our way is that we don't have any uv coordinates for the fragments since
+		we're doing this as a post processing effect. This can be solved using triplanar mapping; by using the xy, yz, and
+		xz planes in place of the uv coordinates, and interpolating between them based on the fragment normal direction.</p>
+		
+		<figure>
+			<img src="triplanar_mapping.gif">
+		</figure>
+		
+		<p>Next, we need some way to convert the tangent space normals into world space. Since I couldn't figure out anything
+		better, I just reverse engineered the rotation matrices for the sphere base normal using inverse trig functions. Then, 
+		to convert to world space, we just need to rotate the tangent space normals using the base normal rotation matrices. </p>
+		
+		<figure>
+			<img src="ocean_normal_mapping.png" width = 90%>
+		</figure>
+		
+		<h2 id="AtmosphericScattering">Atmospheric Scattering</h2>
+		<p>In order to get to the camera, light from the sun must first enter the atmosphere, hit the camera view direction path,
+		and scatter towards the camera. If we can calculate the sum of light that scatters towards the camera along it's view
+		path, then we'll be able to render the atmosphere correctly. </p>
+		
+		<figure>
+			<img src="atmosphere_transmittance.png">
+		</figure>
+		
+		<p>To calculate the amount of light that reaches a given point on the camera view path, we need to compute the 
+		transmittance of the sunRay. Along a given path through the atmosphere, we define the 'transmittance' of that path
+		as the integral of the atmospheric density along the path. Since calculating the exact value of this integral is 
+		relatively difficult, we can just calculate it as a reimann sum using a few sample points along the path. </p>
+		
+		<pre>
+			<code>
+const int numOpticalDepthPoints = 10;
+
+float transmittance(vec3 rayOrigin, vec3 rayDir, float rayLength) {
+	vec3 densitySamplePoint = rayOrigin;
+	float stepSize = rayLength / (numOpticalDepthPoints - 1);
+	float t = 0;
+	for(int i = 0; i < numOpticalDepthPoints; i++){
+		float localDensity = densityAtPoint(densitySamplePoint);
+		t += localDensity * stepSize;
+		densitySamplePoint += rayDir * stepSize;
+	}
+	return t;
+}
+			</code>
+		</pre>
+		
+		<p>Computing the atmospheric density at a given point is simple, you just need to consider that atmospheric
+		density starts at 1 on the surface, and decays exponentially when you gain altitude.</p>
+		
+		<pre>
+			<code>
+float densityAtPoint(vec3 densitySamplePoint) {
+	float heightAboveSurface = length(densitySamplePoint - planet_pos) - planet_radius;
+	float height01 = heightAboveSurface / (atmosphere_radius - planet_radius);
+	//Scale density to be 0 at atmosphere cutoff
+	float localDensity = exp(-height01 * densityFalloff) * (1.0 - height01);	
+	return localDensity;
+}
+			</code>
+		</pre>
+		
+		<p>We also need to factor in that a portion of the light that is scattered towards the camera is going to be scattered
+		away along the viewRay. We can factor this in by multiplying by the viewRay's transmittance. The full function to
+		calculate the amount of light recieved by the camera is below:</p>
+		
+		<pre>
+			<code>
+const int numInScatteringPoints = 10;
+			
+float calculateLight(vec3 rayOrigin, vec3 rayDir, float rayLength) {
+	rayDir = normalize(rayDir);
+	vec3 inScatterPoint = rayOrigin;
+	float stepSize = rayLength / (numInScatteringPoints - 1);
+	float inScatteredLight = vec3(0);
+	float viewRayOpticalDepth = 0;
+	
+	for(int i = 0; i < numInScatteringPoints; i++){
+		float sunRayLength = raySphereLength(inScatterPoint, -sunLightDir, planet_pos, atmosphere_radius);
+		float sunRayTransmittance = transmittance(inScatterPoint, -sunLightDir, sunRayLength);
+		float viewRayTransmittance = transmittance(rayOrigin, rayDir, stepSize * i);
+		float t = exp(-(sunRayTransmittance + viewRayTransmittance));
+		float localDensity = densityAtPoint(inScatterPoint);
+		 
+		inScatteredLight += localDensity * t * stepSize * scatteringCoefficients;
+		inScatterPoint += rayDir * stepSize;
+	}
+
+	return inScatteredLight;
+}
+			</code>
+		</pre>
+		
+		<p>To add colors, we can consider the fact that different wavelengths of light have different scattering coefficients. 
+		These scattering coefficients will affect the transmittance of that particular wavelength travelling through the 
+		atmosphere, so the only change you need to do is to multiply <code>(sunRayTransmittance + viewRayTransmittance)</code>
+		by a different number for each unique wavelength of light. In real life, the ratio is <code>1 / pow(wavelength, 4)</code>, 
+		but I scaled it up a few hundred times to make the effect look better. </p>
+		
+		<figure>
+			<img src="atmosphere_colors.png">
+		</figure>
+		
+		<h2 id="Links">Links</h2>
+		<p>Here is the <a href="https://github.com/Andwerpz/ProceduralPlanets">link</a> to the github repo.</p>
+		 
+	</div>
+</div>
+
+</html>

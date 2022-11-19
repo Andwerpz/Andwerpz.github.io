@@ -32,6 +32,13 @@ p {
 	font-size: 14px;
 }
 
+pre code {
+  background-color: #eee;
+  border: 1px solid #000;
+  display: block;
+  padding-left: 15px;
+}
+
 li {
 	color: #212121;
 	line-height: 1.4;
@@ -121,7 +128,7 @@ a:hover {
 }
 
 .blog {
-	width: 40vw;
+	width: 45vw;
 	position: relative;
 	margin: auto;
 	margin-bottom: 30px;
