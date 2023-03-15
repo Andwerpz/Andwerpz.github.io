@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="ISO-8859-1">
+<title>The Website Project</title>
+<link rel="stylesheet" href="../../../styles/styles.css">
+</head>
+
+<script src = "https://cdn.jsdelivr.net/npm/p5@1.2.0/lib/p5.js"></script>
+<script src="http://cdnjs.cloudflare.com/ajax/libs/p5.js/0.5.6/addons/p5.dom.js"></script>
+<script src = "../../../js/banner/sketch.js"></script>
+<script src = "../../../js/banner/boid.js"></script>	
+
+
+<div id = "banner">
+</div>
+
+<div class = "header">
+	<div class = "header-text">
+		<h1>Discord Games Clone</h1>
+	</div>
+</div>
+	
+<div class = "nav_links">
+	<div class = "nav_link">
+		<a href = "../../../small_projects.html">Small Projects</a>
+	</div>
+	<div class = "nav_link">
+		<a href = "../../../index.html">Main Page</a>
+	</div>
+	<div class = "nav_link">
+		<a href = "../../../about_me.html">About Me</a>
+	</div>
+</div>
+
+<div class = "sidebar">
+	<a href = "#Intro">Intro</a> <br>
+	<a href = "#Chess">Chess</a> <br>
+	<a href = "#Scrabble">Letter League</a> <br>
+	<a href = "#BlazingEights">Blazing Eights</a> <br>
+	<a href = "#CrackHeads">Sketch Heads</a> <br>
+	<a href = "#RocketLeague">Bobble League</a> <br>
+</div>
+
+<div class = "page">
+	<div class = "blog">
+		<h2 id="Intro">Intro</h2>
+		<p>If you use discord, then chances are that you've noticed the minigames that you can start when in a server voice channel. 
+		The problem is that most of the games require Discord Nitro, a paid subscription, and I'm broke. Thus, a scheme was born to get
+		free Discord Nitro minigames through just making my own versions of them. </p>
+		
+		<p>In this here blog, I will go through the games in order of creation, and who knows, I might add some more on at a later date. 
+		Also, here is the <a href="https://github.com/Andwerpz/DiscordGamesClone">link</a> to the github repo if you'd like to try it out
+		yourself.</p>
+		
+		<p>As a side note, I did have alot of learning photoshop thru creating the banners
+		
+		<h2 id="Chess">Chess in the Park</h2>
+		
+		<!-- TODO Insert image of chess -->
+		
+		<p>This is pretty much normal chess; you can make games to 1v1 your friends, and spectate the games that are currently going on. 
+		There are some comfort features implemented such as tile highlighting for previous moves, and indicator dots telling you where the 
+		legal moves are. Not much can go wrong when making a chess clone.</p>
+		
+		<h2 id="Scrabble">Letter League</h2>
+		
+		<!-- TODO Insert image of letter league -->
+		
+		<p>The one main issue I had with Letter League is that you couldn't have a custom word bank, so I solved that by just making it from
+		scratch. I mean, there's not really much else to say other than that this is just normal scrabble. </p>
+		
+		<details>
+			<summary> </summary>
+			<p>I did add a brute force solver that automatically plays the best move point wise. 
+			To activate, just press 'C' when it is your turn.</p>
+		</details>
+		
+		<h2 id="BlazingEights">Blazing Eights</h2>
+		
+		<!-- TODO Insert image of blazing eights -->
+		
+		<p>From the wikipedia entry on Crazy Eights, I learned that it was a "shedding-type" card game, so I just made an UNO clone for this
+		one. The deck used for this game is the normal french suited set of playing cards, plus some special wildcards brought over from UNO.
+		Normal UNO rules apply; each person must play a card that matches the suit or value of the previous card played, except if a wildcard
+		is played, then any card is acceptable to play. There is also a 1 in 1000 chance to draw the elusive +200 card, which if played, turns
+		the receiving player's screen into a wall of cards. </p>
+		
+		<p>During the development of this game, I also finally implemented a UI element nesting system, where nested UI elements have their
+		transformations modified by multiplying their transformation matrix with their parent's matrix. This allows for me to not just slide 
+		UI elements around in the x and y axis, but also rotate, shrink, enlarge; pretty much do anything I want with them.</p>
+		
+		<h2 id="CrackHeads">Sketch Heads</h2>
+		
+		<!-- TODO Insert image of crack heads -->
+		
+		<p>One person is given a words to draw, and everyone else tries to guess the word they are trying to draw. Points are awarded based on 
+		how quickly each person can guess the word. Optionally, you can consume "crack" to get a point multiplier; the downside being that crack
+		makes it harder to guess the word. Level 1 changes the color of the lines, level 2 changes the shape, and level 3 sabotages the hints
+		from other players thru the chat, and the hint bar at the top of the screen. 
+		
+		<h2 id="RocketLeague">Bobble League</h2>
+		
+		<!-- TODO Insert image of rocket league -->
+		
+		<p>Players first form into teams. Then, everyone decides on the magnitude and direction of force they want to impart upon their pegs. 
+		Once the time runs out, all of the impulses are applied simultaneously, and time moves forward until all the pegs stop. The goal for both
+		teams is to knock the peg with the ball on it into the other teams goal.</p>
+		
+		<p>To aid in the effort, players can collect peg toppers. Different peg toppers have different amounts of mass associated with them;
+		the heavier ones having slower movement, but having more inertia, and the lighter ones having quick movement, but being easy to knock
+		away. </p>
+		
+		<p>Physics calculations are all done server side. I'm pretty proud of the physics engine for this game; it's a 2D physics engine with 
+		support for circles and convex polygons, and of course you can make concave polygons by combining two or more convex ones. It is also capable
+		of doing plausible friction and angular velocity calculations, stuff that was missing from my previous iterations of physics engines.</p>
+		
+	</div>
+</div>
+
+</html>
