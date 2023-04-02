@@ -184,7 +184,7 @@ MathJax = {
 		
 		<p>Next, since we know the restitution of the collision, we can directly calculate the total amount of impulse force, half of which will go to each 
 		of the colliding bodies.
-		$$\text{Total Force} = \frac{(1 + e) * \vec{r}}{\frac{1}{m_1} + \frac{1}{m_2} + \frac{(r_1 \times n)^2}{I_1} + \frac{(r_2 \times n)^2}{I_2}}$$
+		$$\text{Total Force} = \frac{(1 + e) * \vec{r}}{\frac{1}{m_1} + \frac{1}{m_2} + \frac{(\vec{r_1} \times \vec{n})^2}{I_1} + \frac{(\vec{r_2} \times \vec{n})^2}{I_2}}$$
 		$I$ is the moment of inertia, and $n$ is the surface normal vector.</p>
 		
 		<p>Once we have the magnitude of impulse, we can apply it to the bodies at the point of contact. When applying the force, make sure to separate it
