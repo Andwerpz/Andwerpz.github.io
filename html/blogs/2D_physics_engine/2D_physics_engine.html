@@ -60,7 +60,8 @@ MathJax = {
 			<img src="madmonkey_screencap.png" width="70%">
 		</figure>
 		
-		<p>If you want to try out the game, here is the <a href = "https://github.com/Andwerpz/MadMonkeys">link</a> to the github repo. All it is at the 
+		<p>In this blog, I will discuss the physics behind a 2D rigid body physics engine. If you want to try out the game, here is the 
+		<a href = "https://github.com/Andwerpz/MadMonkeys">link</a> to the github repo. All it is at the 
 		moment is just a level editor.</p>
 		
 		<h2 id = "Intersection">Checking for Intersection</h2>
@@ -154,6 +155,27 @@ MathJax = {
 		side of the equation resolves to negative, since that would indicate a situation where the two bodies phase through each other, for example, a bullet
 		passing through a sheet of wood.</p>
 		
+		<h4>1D Impulse</h4>
+		<p>When resolving collisions, it's nice to figure out the force of the collision. That way, if we know the force, $f$, we can just apply it onto both objects 
+		within our physics world, and the collision is resolved. But the problem here is that we are dealing with rigid bodies that are infinitely hard, which 
+		means that the time, $t$, of the collision is 0. Since change in momentum is equal to $ft$, this implies that $f$ has
+		to have infinite magnitude, and that's a problem.</p>
+		
+		<p>We can get around this by just directly calculating the expected change in momentum, or impulse, that the collision will have on the two objects. Since
+		momentum is just velocity times mass, and we know both the initial and final velocities, we already know impulse.</p>
+		
+		<p>
+		$$\text{Impulse}(m_1) = m_1v_{1f} - m_1v_{1i}$$
+		$$= m_1(\frac{m_1v_{1i} + m_2v_{2i} - m_2e(v_{1i} - v_{2i})}{m_1 + m_2} - v_{1i})$$
+		$$= m_1(\frac{m_1v_{1i} + m_2v_{2i} - m_2e(v_{1i} - v_{2i}) - m_1v_{1i} - m_2v_{1i}}{m_1 + m_2})$$
+		$$= m_1(\frac{m_2v_{2i} - m_2v_{1i} - m_2e(v_{1i} - v_{2i})}{m_1 + m_2})$$
+		$$= m_1m_2(\frac{v_{2i} - v_{1i} - ev_{1i} + ev_{2i}}{m_1 + m_2})$$
+		$$= \frac{m_1m_2}{m_1 + m_2}(1 + e)(v_{2i} - v_{1i})$$
+		$$= \frac{(1 + e)(v_{2i} - v_{1i})}{\frac{1}{m_1} + \frac{1}{m_2}}$$
+		</p>
+		
+		<p>To find impulse for $m_2$, we can just negate the impulse for $m_1$, due to Newton's third law.</p>
+		
 		<h3>2D Collisions</h3>
 		<p>Now, how will this help us solve 2D collisions? The crucial observation to solving 2D collisions is to notice that they are just 1D collisions
 		in disguise. When two bodies collide in 2D, any velocity that is perpendicular to the surface normal of the collision is unaffected, and we can treat 
@@ -184,7 +206,7 @@ MathJax = {
 		
 		<p>Next, since we know the restitution of the collision, we can directly calculate the total amount of impulse force, half of which will go to each 
 		of the colliding bodies.
-		$$\text{Total Force} = \frac{(1 + e) * \vec{r}}{\frac{1}{m_1} + \frac{1}{m_2} + \frac{(\vec{r_1} \times \vec{n})^2}{I_1} + \frac{(\vec{r_2} \times \vec{n})^2}{I_2}}$$
+		$$\text{Impulse} = \frac{(1 + e) * \vec{r}}{\frac{1}{m_1} + \frac{1}{m_2} + \frac{(\vec{r_1} \times \vec{n})^2}{I_1} + \frac{(\vec{r_2} \times \vec{n})^2}{I_2}}$$
 		$I$ is the moment of inertia, and $n$ is the surface normal vector.</p>
 		
 		<p>Once we have the magnitude of impulse, we can apply it to the bodies at the point of contact. When applying the force, make sure to separate it
