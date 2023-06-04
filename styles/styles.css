@@ -77,6 +77,8 @@ img {
 	
 	position: relative;
 	display: inline-block;
+	
+	box-shadow: 2px 2px 5px #aaaaaa;
 }
 
 img.pixelart{
