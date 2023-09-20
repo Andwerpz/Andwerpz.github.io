@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="ISO-8859-1">
+<title>The Website Project</title>
+<link rel="stylesheet" href="../../../styles/styles.css">
+</head>
+
+<script src = "https://cdn.jsdelivr.net/npm/p5@1.2.0/lib/p5.js"></script>
+<script src="http://cdnjs.cloudflare.com/ajax/libs/p5.js/0.5.6/addons/p5.dom.js"></script>
+<script src = "../../../js/banner/sketch.js"></script>
+<script src = "../../../js/banner/boid.js"></script>	
+
+<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+<script>
+MathJax = {
+  tex: {
+    inlineMath: [['$', '$'], ['\\(', '\\)']]
+  }
+};
+</script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+<div id = "banner">
+</div>
+
+<div class = "header">
+	<div class = "header-text">
+		<h1>Hydraulic Terrain Generation</h1>
+	</div>
+</div>
+	
+<div class = "nav_links">
+	<div class = "nav_link">
+		<a href = "../../../small_projects.html">Small Projects</a>
+	</div>
+	<div class = "nav_link">
+		<a href = "../../../index.html">Main Page</a>
+	</div>
+	<div class = "nav_link">
+		<a href = "../../../about_me.html">About Me</a>
+	</div>
+</div>
+
+<div class = "sidebar">
+	<a href = "#GeneratingBaseTerrain">Generating Base Terrain</a> <br>
+	<a href = "#SimulatingErosion">Simulating Erosion</a> <br>
+	<a href = "#PotentialImprovements">Potential Improvements</a> <br>
+</div>
+
+<div class = "page">
+	<div class = "blog">
+		<p>Generating realistic looking terrain heightmaps with 2D noise functions, such as perlin or simplex noise is difficult. Of
+		course there are wizards like <a href="https://www.youtube.com/watch?v=BFld4EBO2RE">Inigo Quilez</a> that can generate fully 
+		rendered terrain entirely within the fragment shader, but I'm
+		looking for a more straightfowards approach. Although the usual method of perlin noise with fractal brownian 
+		motion (fBm) may nicely approximate the general shape of realistic terrain, it lacks features such as sharp ridges and flat valleys 
+		that make many mountainous regions look distinctive. It just so happens that both of these land features are formed in the 
+		real world through hydraulic erosion, and so this is exactly what I want to simulate. </p>
+		
+		<h2 id = "GeneratingBaseTerrain">Generating Base Terrain</h2>
+		<p>In order to erode terrain, we must first start with some terrain to begin with. As I mentioned before, perlin noise and fBm 
+		is good for approximating the general shape of terrain, so we'll use this as our base terrain.</p>
+		
+		<!-- Insert image of base terrain -->
+		<figure>
+			<img src="base_terrain.png" width="70%">
+		</figure>
+		
+		<p>If you want, you can also domain warp the base terrain, leading to interesting results:</p>
+		
+		<!-- Insert image of domain warped base terrain -->
+		<figure>
+			<img src="domain_warp_base_terrain.png" width="70%">
+		</figure>
+		
+		<h2 id = "SimulatingErosion">Simulating Erosion</h2>
+		<p>Now, all we have to do is to simulate the erosion. The plan is to drop thousands of water droplets onto the terrain, and
+		depending on the slope of the terrain, the droplet will either pick up sediment; reducing the height at the given location, or
+		will deposit some fraction of its sediment; increasing the height. Then, the water droplet will gain velocity in the direction
+		of the current gradient, and the position will be updated according to the current velocity. If the velocity ever goes below 
+		some threshold, the water droplet will be terminated.</p>
+		
+		<!-- Show erosion code snippet -->
+		<pre><code>
+private static void performSnowballErosion(float[][][] heightmap) {
+	float epsilon = 0.01f;
+	
+	float erosionRate = 1.5f;
+	float depositionRate = 0.5f;
+
+	float friction = 0.7f;
+	float speedMult = 1;
+
+	float x = (float) (Math.random() * TERRAIN_RESOLUTION);
+	float y = (float) (Math.random() * TERRAIN_RESOLUTION);
+	x = MathUtils.clamp(1, TERRAIN_RESOLUTION - 1, x);
+	y = MathUtils.clamp(1, TERRAIN_RESOLUTION - 1, y);
+
+	//velocity
+	float vx = 0;
+	float vy = 0;
+
+	//previous x, y
+	float px = x;
+	float py = y;
+
+	//the amount of carried sediment
+	float carriedSediment = 0;
+
+	int maxIterations = TERRAIN_RESOLUTION;
+
+	for (int i = 0; i < maxIterations; i++) {
+		//get surface normal of terrain 
+		Vec3 surfaceNormal = sampleNormal(heightmap, x, y);
+
+		//if surface normal is flat, then we can stop
+		if (Math.abs(1.0 - surfaceNormal.y) <= epsilon) {
+			break;
+		}
+
+		//first, calculate erosion amt
+		float erosionAmt = (1 - surfaceNormal.y) * sedimentErosionRate;
+		float pSedimentAmt = sampleHeight(heightmap, px, py);
+
+		//can't erode previous location to a lower height than the current one
+		float heightDiff = sampleHeight(heightmap, px, py) - sampleHeight(heightmap, x, y);
+		erosionAmt = Math.min(heightDiff, erosionAmt);
+		
+		//next, calculate what we deposit
+		float depositCoeff = surfaceNormal.y;
+
+		//make sure that we can't deposit sediment on steep slopes
+		if (depositCoeff < 0.3) {
+			depositCoeff = 0;
+		}
+
+		float deposit = carriedSediment * depositionRate * depositCoeff;
+
+		//update the heightmap
+		incrementHeight(heightmap, px, py, deposit - erosionAmt);
+
+		carriedSediment += erosionAmt - deposit;
+
+		//finally, update position of the droplet
+		vx = friction * vx + (surfaceNormal.x) * speedMult;
+		vy = friction * vy + (surfaceNormal.z) * speedMult;
+		px = x;
+		py = y;
+		x += vx;
+		y += vy;
+
+		//we fell off the edge
+		if (x < 0 || x > TERRAIN_RESOLUTION - 1 || y < 0 || y > TERRAIN_RESOLUTION - 1) {
+			break;
+		}
+	}
+}
+		</code></pre>
+		
+		<p>We don't have to be too accurate when finding the normal at a point in the terrain; I just clamped the coordinates to 
+		the nearest integer, and 
+		sampled the normal there. To compute the normal, I just created 4 triangles from the neighboring cells of the heightmap, 
+		and averaged the normals of those 4 triangles.</p>
+		
+		<!-- Terrain with normal lines -->
+		<pre><code>
+//create 4 triangles and average to sample normal
+private static Vec3 sampleNormal(float[][][] heightmap, float x, float z) {
+	int r = MathUtils.clamp(1, TERRAIN_RESOLUTION - 2, Math.round(x));
+	int c = MathUtils.clamp(1, TERRAIN_RESOLUTION - 2, Math.round(z));
+
+	Vec3 center = new Vec3(r, sampleHeight(heightmap, r, c), c);
+	Vec3 up = center.sub(new Vec3(r - 1, sampleHeight(heightmap, r - 1, c), c));
+	Vec3 down = center.sub(new Vec3(r + 1, sampleHeight(heightmap, r + 1, c), c));
+	Vec3 left = center.sub(new Vec3(r, sampleHeight(heightmap, r, c - 1), c - 1));
+	Vec3 right = center.sub(new Vec3(r, sampleHeight(heightmap, r, c + 1), c + 1));
+
+	Vec3 normal = new Vec3(0);
+	normal.addi(left.cross(up));
+	normal.addi(down.cross(left));
+	normal.addi(right.cross(down));
+	normal.addi(up.cross(right));
+
+	normal.normalize();
+
+	return normal;
+}				
+		</code></pre>
+		<p>After the erosion simulation is done, the terrain looks much more convincing. Paths that droplets commonly take form divots
+		and valleys are flat due to sediment being constantly deposited. It is worth noting that in order to get
+		here, we didn't need any complicated maths, just a little intuition and guessing as to how erosion works.</p>
+		
+		<!-- 1 color eroded terrain -->
+		<figure>
+			<img src="1layer_eroded_terrain.png" width="70%">
+		</figure>
+		
+		<h3>Layered Terrain</h3>
+		<p>This terrain looks kind of boring though, as it's only made up of 1 material. In the real world, terrain usually is made
+		up of layers, with lighter sediment such as dirt and loose stones near the top, and heavier stuff like bedrock deeper down.</p>
+		
+		<p>Let's try to make our simulation handle two layers of material, the top layer being analagous to dirt, and the bottom one being
+		more like stone. Now, instead of storing just 1 height per (x, z) coordinate in our heightmap, we can store both the height
+		of stone, and the height of dirt at each (x, z) coordinate. </p>
+		
+		<p>The routine for handling the erosion amount of a water droplet also changes; eroding stone should be harder than eroding dirt, so
+		an erosion coefficient should be set based on the material that we are eroding.</p>
+		
+		<!-- 2 Layer erosion code snippet -->
+		<pre><code>
+//first, calculate erosion amt
+float sedimentErosion = (1 - surfaceNormal.y) * sedimentErosionRate;
+float solidErosion = 0;
+float pSedimentAmt = sampleSediment(heightmap, px, py);
+
+//factor in eroding solid layer
+if (sedimentErosion > pSedimentAmt) {
+	sedimentErosion = pSedimentAmt;
+	solidErosion = (1 - pSedimentAmt / sedimentErosionRate) * solidErosionRate;
+}
+
+//can't erode previous location to a lower height than the current one
+float heightDiff = sampleHeight(heightmap, px, py) - sampleHeight(heightmap, x, y);
+sedimentErosion = Math.min(heightDiff, sedimentErosion);
+heightDiff -= sedimentErosion;
+solidErosion = Math.min(heightDiff, solidErosion);
+		</code></pre>
+		
+		<p>Now, if we have two types of materials we can't just color the entire terrain model one color anymore; the colors need to
+		reflect which material is on top in the heightmap. My solution was just to blend between the dirt and stone color if the dirt
+		height was below a certain threshold, or just use the dirt color if it's above.</p>
+		
+		<!-- 2 color eroded terrain -->
+		<figure>
+			<img src="2layer_eroded_terrain.png" width="70%">
+		</figure>
+		
+		<h2 id = "PotentialImprovements">Potential Improvements</h2>
+		<p>Of course, there's stuff that can be added or improved upon, I'll list a few ideas here:</p>
+		<ul>
+			<li>Slope based terrain coloring</li>
+			<li>Arbitrary amount of different types of sediment</li>
+			<li>Trees to help lock sediment in place</li>
+			<li>Wind to push sediment around</li>
+			<li>Water droplets pool to form rivers and lakes</li>
+			<li>Do erosion in compute shader for realtime eroding</li>
+		</ul>
+		
+	</div>
+</div>
+
+</html>

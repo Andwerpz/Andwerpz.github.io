@@ -106,8 +106,7 @@
 		<p>Instead of making another sphere to render the ocean, I decided that I would render it as a post processing
 		effect. First, we had to make a ray-sphere intersection algorithm. </p>
 		
-		<pre>
-			<code>
+		<pre><code>
 //returns the length of intersection between a ray and a sphere
 float raySphereLength(vec3 rayOrigin, vec3 rayDir, vec3 spherePos, float sphereRadius) {
 	vec3 rayToSphere = spherePos - rayOrigin;
@@ -133,8 +132,7 @@ float raySphereLength(vec3 rayOrigin, vec3 rayDir, vec3 spherePos, float sphereR
 	
 	return distToFar - distToNear;
 }
-			</code>
-		</pre>
+		</code></pre>
 		
 		<p>Cool, now we should be able to figure out whether a given fragment intersects with a sphere passed in as a
 		uniform. We can find the direction vector for each fragment by rendering a unit cube around the camera, and 
@@ -209,8 +207,7 @@ float raySphereLength(vec3 rayOrigin, vec3 rayDir, vec3 spherePos, float sphereR
 		as the integral of the atmospheric density along the path. Since calculating the exact value of this integral is 
 		relatively difficult, we can just calculate it as a reimann sum using a few sample points along the path. </p>
 		
-		<pre>
-			<code>
+		<pre><code>
 const int numOpticalDepthPoints = 10;
 
 float transmittance(vec3 rayOrigin, vec3 rayDir, float rayLength) {
@@ -224,14 +221,12 @@ float transmittance(vec3 rayOrigin, vec3 rayDir, float rayLength) {
 	}
 	return t;
 }
-			</code>
-		</pre>
+		</code></pre>
 		
 		<p>Computing the atmospheric density at a given point is simple, you just need to consider that atmospheric
 		density starts at 1 on the surface, and decays exponentially when you gain altitude.</p>
 		
-		<pre>
-			<code>
+		<pre><code>
 float densityAtPoint(vec3 densitySamplePoint) {
 	float heightAboveSurface = length(densitySamplePoint - planet_pos) - planet_radius;
 	float height01 = heightAboveSurface / (atmosphere_radius - planet_radius);
@@ -239,15 +234,13 @@ float densityAtPoint(vec3 densitySamplePoint) {
 	float localDensity = exp(-height01 * densityFalloff) * (1.0 - height01);	
 	return localDensity;
 }
-			</code>
-		</pre>
+		</code></pre>
 		
 		<p>We also need to factor in that a portion of the light that is scattered towards the camera is going to be scattered
 		away along the viewRay. We can factor this in by multiplying by the viewRay's transmittance. The full function to
 		calculate the amount of light recieved by the camera is below:</p>
 		
-		<pre>
-			<code>
+		<pre><code>
 const int numInScatteringPoints = 10;
 			
 float calculateLight(vec3 rayOrigin, vec3 rayDir, float rayLength) {
@@ -270,8 +263,7 @@ float calculateLight(vec3 rayOrigin, vec3 rayDir, float rayLength) {
 
 	return inScatteredLight;
 }
-			</code>
-		</pre>
+		</code></pre>
 		
 		<p>To add colors, we can consider the fact that different wavelengths of light have different scattering coefficients. 
 		These scattering coefficients will affect the transmittance of that particular wavelength travelling through the 
