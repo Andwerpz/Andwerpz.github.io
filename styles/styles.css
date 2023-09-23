@@ -150,8 +150,6 @@ a:hover {
 }
 
 .blog figure {
-	margin: auto;
-	padding: 5px;
 	position: relative;
 	display: block;
 	text-align: center;
@@ -169,10 +167,12 @@ a:hover {
 .gallery figure {
 	display: block;
 	position: relative;
-	margin-top: 10px;
-	margin-left: 5px;
-	margin-right: 5px;
 	display: inline-block;	
+}
+
+figure {
+	margin: 0px;
+	padding: 5px;
 }
 
 .nav_links {

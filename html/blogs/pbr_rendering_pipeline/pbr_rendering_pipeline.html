@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="ISO-8859-1">
+<title>Portfolio - PBR Rendering Pipeline</title>
+<link rel="stylesheet" href="../../../styles/styles.css">
+</head>
+
+<script src = "https://cdn.jsdelivr.net/npm/p5@1.2.0/lib/p5.js"></script>
+<script src="http://cdnjs.cloudflare.com/ajax/libs/p5.js/0.5.6/addons/p5.dom.js"></script>
+<script src = "../../../js/banner/sketch.js"></script>
+<script src = "../../../js/banner/boid.js"></script>	
+
+<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+<script>
+MathJax = {
+  tex: {
+    inlineMath: [['$', '$'], ['\\(', '\\)']]
+  }
+};
+</script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+<div id = "banner">
+</div>
+
+<div class = "header">
+	<div class = "header-text">
+		<h1>PBR Rendering Pipeline</h1>
+	</div>
+</div>
+	
+<div class = "nav_links">
+	<div class = "nav_link">
+		<a href = "../../../small_projects.html">Small Projects</a>
+	</div>
+	<div class = "nav_link">
+		<a href = "../../../index.html">Main Page</a>
+	</div>
+	<div class = "nav_link">
+		<a href = "../../../about_me.html">About Me</a>
+	</div>
+</div>
+
+<div class = "sidebar">
+	<a href = "#RenderingEquation">Rendering Equation</a> <br>	
+	<a href = "#ImageBasedLighting">Image Based Lighting</a> <br>
+</div>
+
+<div class = "page">
+	<div class = "blog">
+		<p>PBR stands for Physically Based Rendering, which makes sense because this method of rendering aims to achieve greater
+		photorealism than it's predecessor; Phong shading. It aims to do this by mimicing how light would behave in the real world, 
+		while also being cheap enough to do in real time.</p>
+		
+		<p>I've implemented a deferred PBR rendering pipeline for my game engine, and I think it turned out pretty great. 
+		In order to put this together, I followed the excellent tutorial by Joey de Vries over at 
+		<a href="https://learnopengl.com/">learnopengl.com</a>. If you want to learn the theory and get implementation help, Joey's
+		tutorial is the way to go; here, I will just write about some of the parts that I found interesting.</p>
+		
+		<h2 id = "RenderingEquation">Rendering Equation</h2>
+		<p>The rendering equation describes the total amount of light being emitted from a point along a particular viewing direction. 
+		The basis for this equation is the conservation of energy, the idea being that the total amount of emitted light from a point must
+		not exceed the amount of light incident on that point. For PBR, we use a specific version of the rendering equation known as the
+		reflectance equation.</p>
+		
+		<!-- reflectance equation -->
+		<figure>
+			<p>$$L_o(p,\omega_o)=\int_{\Omega}^{}f_r(p,\omega_i,\omega_o)L_i(p,\omega_i)n\cdot \omega_id\omega_i$$</p>
+			<figcaption>Reflectance Equation</figcaption>
+		</figure>
+		
+		<p>$L_o(p,\omega_o)$ represents the sum of reflected light from point $p$ in the direction $\omega_o$. Since light reflected from
+		$p$ can come from any direction, we need to integrate across the entire hemisphere, $\Omega$.</p>
+		
+		<!-- Show image of hemisphere -->
+		<figure>
+			<img src="hemisphere_integral.png" width="35%">
+			<figcaption>Image courtesy of <a href="https://learnopengl.com/">learnopengl.com</a></figcaption>
+		</figure>
+		
+		<p>Next, $L_i(p,\omega_i)$ is the amount of light incident on point $p$ from direction $\omega_i$. We scale this by the value 
+		$n\cdot\omega_i$, which is just the cosine of the angle between $n$, the surface normal of $p$, and $\omega_i$. Finally, 
+		$f_r(p,\omega_i,\omega_o)$ is the BRDF or bidrectional reflection distribution function. This function takes as input the incoming
+		light direction $\omega_i$, the outgoing light direction $\omega_o$, the surface normal $n$, and some parameter to describe the 
+		surface roughness $a$, and computes what fraction of light should be reflected. For example, if the surface is extremely smooth, 
+		such as a mirror, the function would return $0$ for almost every $\omega_i$, except for the one that has the same reflected angle
+		as $\omega_o$, in which case it would return $1$.</p>
+		
+		<p>When dealing with point and directional lights, we don't actually have to compute the entire integral; since these lights only
+		come in from a specific direction, we can just compute the sum of contributions for all of the lights. But if you want illumination
+		from the skybox, then you'll have to compute the integral since the skybox is a 3D surface.</p>
+		
+		<h3>BRDF</h3>
+		<p>The most common BRDF used in PBR pipelines is the Cook-Torrance BRDF.</p>
+		
+		<figure>
+			<p>$$f_r=k_df_{lambert}+k_sf_{cook-torrance}$$</p>
+		</figure>
+		
+		<p>$k_d$ is the ratio of light that gets refracted, and $k_s$ (which should be equal to $1-k_d$ to satisfy the conservation of energy) 
+		is the amount that gets reflected. $f_{lambert}$ is known as the Lambertian diffuse, which is a constant factor:</p>
+		
+		<figure>
+			<p>$$f_{lambert}=\frac{c}{\pi}$$</p>
+		</figure>
+		
+		<p>with $c$ being the surface albedo, and the divide by $\pi$ is there to normalize the diffuse light, as the integral is scaled by $\pi$.</p>
+		
+		<p>The specular portion, $f_{cook-torrance}$ is much more complicated:</p>
+		
+		<figure>
+			<p>$$f_{cook-torrance}=\frac{DFG}{4(\omega_o\cdot n)(\omega_i\cdot n)}$$</p>
+		</figure>
+		
+		<p>The numerator is 3 functions, and the denominator is just a normalization factor. The three functions are as follows:</p>
+		
+		<ul>
+			<li>$D$, Normal <b>D</b>istribution Function: Approximates the amount of microfacets aligned to the halfway vector between $\omega_o$ 
+				and $\omega_i$</li>
+			<li>$F$, <b>F</b>resnel: Describes the ratio of surface reflection at different angles.</li>
+			<li>$G$, <b>G</b>eometry Function: Describes the self shadowing property of microfacets.</li>
+		</ul>
+		
+		<p>For each of these functions, there are many approximations out there that you can choose from, some more realistic, and some more efficient.
+		I won't go over them here, as my understanding of them currently is not very good.</p>
+		
+		<h2 id = "ImageBasedLighting">Image Based Lighting</h2>
+		<h3>Ambient Lighting</h3>
+		<p>When using IBL, ambient lighting is calculated by getting the amount of incoming light from the skybox, or environment map, that 
+		hits the fragment surface, weighted by the cosine angle between the incoming light and the surface normal. This can be computed
+		using a surface integral of a hemisphere. Note that we only really care about the surface normal of the fragment, as the environment
+		map stays constant regardless of the position.</p>
+		
+		<!-- Show hemisphere integral -->
+		
+		<p>Obviously, this integral is probably too slow to compute on the fly. Note that since the value of the integral is only 
+		dependent on the direction of the fragment normal, we can precompute an irradiance cubemap to sample the integral value 
+		when rendering.</p>
+		
+		<!-- Comparison of environment map vs irradiance map -->
+		<figure>
+			<img src="irradiance_unblurred.png" width="45%">
+			<img src="irradiance_blurred.png" width="45%">
+		</figure>
+		
+		<p>The benefits of doing ambient lighting like this are most apparent when seeing how a model is lit using multiple different 
+		environment maps. Ambient lighting based on an environment map like this really helps models 'fit in' with minimal to no need
+		to tweak lighting values. </p>
+		
+		<!-- Comparison of the same model in multiple areas -->
+		<figure>
+			<img src="ambient_env_1.png" width="45%">
+			<img src="ambient_env_2.png" width="45%">
+			<img src="ambient_env_3.png" width="45%">
+			<img src="ambient_env_4.png" width="45%">
+		</figure>
+		
+		<h3>Specular Reflections</h3>
+		<p>Specular reflections are done much like ambient lighting, except now we also have to account for the roughness of the
+		surface. We can precompute a reflection map based on the environment map and use mipmaps to store the different convolution
+		levels. In the shader, trilinear sampling is used to interpolate between different roughness levels. </p>
+		
+		<!-- Comparison of different levels of reflection map convolution -->
+		<figure>
+			<img src="roughness_spheres.png" width="90%">
+			<figcaption>Decreasing roughness from left to right results in clearer specular reflections</figcaption>
+		</figure>
+		
+	</div>
+</div>
+
+</html>
