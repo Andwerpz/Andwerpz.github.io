@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="ISO-8859-1">
+<title>Portfolio - Smoothed Particle Hydrodynamics</title>
+<link rel="stylesheet" href="../../../styles/styles.css">
+</head>
+
+<script src = "https://cdn.jsdelivr.net/npm/p5@1.2.0/lib/p5.js"></script>
+<script src="http://cdnjs.cloudflare.com/ajax/libs/p5.js/0.5.6/addons/p5.dom.js"></script>
+<script src = "../../../js/banner/sketch.js"></script>
+<script src = "../../../js/banner/boid.js"></script>	
+
+<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+<script>
+MathJax = {
+  tex: {
+    inlineMath: [['$', '$'], ['\\(', '\\)']]
+  }
+};
+</script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+<div id = "banner">
+</div>
+
+<div class = "header">
+	<div class = "header-text">
+		<h1>Smoothed Particle Hydrodynamics</h1>
+	</div>
+</div>
+	
+<div class = "nav_links">
+	<div class = "nav_link">
+		<a href = "../../../small_projects.html">Small Projects</a>
+	</div>
+	<div class = "nav_link">
+		<a href = "../../../index.html">Main Page</a>
+	</div>
+	<div class = "nav_link">
+		<a href = "../../../about_me.html">About Me</a>
+	</div>
+</div>
+
+<div class = "sidebar">
+	<a href = "#WaterParticlePhysics">Water Particle Physics</a><br>	
+	<a href = "#SpatialHashing">Spatial Hashing</a><br>
+	<a href = "#ComputeShader">Compute Shader</a><br>
+</div>
+
+<div class = "page">
+	<div class = "blog">
+		<p>
+		I remember playing this mobile game when I was younger called <i>Where's My Water</i> in which you have to solve physics
+		based puzzles to give water to a crocodile so they can take a shower. The part that stood out to me was the actual water, 
+		and I always wondered how they did it. Recently, I came across 
+		<a href="https://www.youtube.com/watch?v=rSKMYc1CQHE">this video</a> by Sebastian Lague, and the water he makes
+		looks strangely like the water in the game, so I decided to give it a shot and reproduce it. I also took this as an 
+		opportunity to learn about compute shaders in OpenGL. 
+		</p>
+		
+		<figure>
+			<img src="wheresmywater.jpg" width="40%">
+		</figure>
+		
+		<h2 id = "WaterParticlePhysics">Water Particle Physics</h2>
+		<p>
+		The technique I'm using to simulate my water is something called <i>Smoothed Particle Hydrodynamics</i>, or SPH for short. 
+		The idea is that we can view our water as a collection of particles that are subject to forces such as pressure, viscosity,
+		and external forces like gravity.
+		</p>
+		
+		<figure>
+			<p>$$\rho\frac{d\vec{V}}{dt}=-\nabla p + \mu\nabla^2\vec{V} + \rho\vec{g}$$</p>
+			<figcaption>Navier Stokes Equation</figcaption>
+		</figure>
+		
+		<h3>Smoothing Function</h3>
+		<p>
+		In order to sample the density at some location within our fluid, we want to use what's called a smoothing function. This 
+		function will allow us to weight the densities of particles depending on their distance to the sample point; the closer a 
+		particle is to the sample point, the more it should contribute to the density. Since we want to be able to control the 
+		blurriness of the output, we'll also define a radius, called the smoothing radius, at which if a particle is outside of
+		this radius, it's contribution will be 0. 
+		</p>
+		
+		<p>
+		For the purpose of sampling the density, I'll use the function $max(0, S - r)^3$, where $S$ is the smoothing radius and $r$
+		is the distance.
+		</p>
+		
+		<p>
+		However, we've just created a problem; if we change the smoothing radius, the density of a point should only get more
+		'smooth', but in reality, it will increase rapidly. To fix this, we can divide the result of the smoothing function by
+		the volume of the smoothing kernel to 'normalize' the result. Finding the volume of the smoothing kernel as a function 
+		of the smoothing radius just requires evaluating the following integral:
+		</p>
+		
+		<figure>
+			<p>$$\int_{0}^{2\pi}\int_{0}^{S}r*f(r) dr d\theta$$</p>
+		</figure>
+		
+		<p>
+		Where $f(r)$ is just the smoothing function. Evaluating the integral when $f(r) = max(0, S - r)^3$ gives us 
+		$V(S) = \frac{\pi S^5}{10}$.
+		</p>
+		
+		<h3>Pressure Force</h3>
+		<p>
+		The pressure force is accounted for by the term $-\nabla p$, which just means that each 
+		particle will move in the direction of the negative pressure gradient. 
+		To compute pressure, it's useful to first define a target density, the idea being that if a particle is above the target 
+		density, we say that it is in positive pressure, and if it is below the target density, it is in negative pressure, and 
+		a particle will always want to move towards the direction of 0 pressure. Setting a target density allows our fluid to 
+		behave more like a fluid, as opposed to behaving like a gas, where the target density is near 0.
+		</p>
+		
+		<pre><code>
+private float calculatePressure(float density) {
+	float densityError = density - targetDensity;
+	float pressure = densityError * pressureMultiplier;
+	return pressure;
+}
+		</code></pre>
+		
+		<p>
+		When applying pressure forces onto particles, we should keep in mind newton's third law; for every action, there is an equal
+		and opposite reaction. For us, this means that the pressure forces applied between two particles should sum to 0. To make sure
+		this happens, we can compute shared pressure, which is just the average pressure between two particles, and use this value
+		to compute the pressure force. 
+		</p>
+		
+		<pre><code>
+private float calculateSharedPressure(float d1, float d2) {
+	float p1 = this.calculatePressure(d1);
+	float p2 = this.calculatePressure(d2);
+	return (p1 + p2) / 2.0f;
+}
+		</code></pre>
+		
+		<p>
+		The direction of the pressure force should be pointed towards the negative gradient of the density field at the particle 
+		location. To compute the gradient of the density field, we can just compute the gradient of the density kernel for every 
+		particle around it, and sum them up. 
+		</p>
+		
+		<pre><code>
+private float densitySmoothingKernelSlope(float dist) {
+	return -3.0f * Math.pow(Math.max(0, smoothingRadius - dist), 2) * waterMass;
+}
+
+private Vec2 calculatePressureForce(int ind) {
+	Vec2 pos = this.waterPositions[ind];
+	Vec2 pressureForce = new Vec2(0, 0);
+	for(int i = 0; i &lt nrParticles; i++){
+		if(i == ind){
+			continue;
+		}
+		float dist = pos.distance(this.waterPositions[i]);
+		Vec2 dir = pos.sub(this.waterPositions[i]);
+		dir.normalize();
+		float densitySlope = this.densitySmoothingKernelSlope(dist);
+		float sharedPressure = this.calculateSharedPressure(this.waterDensities[ind], this.waterDensities[i]);
+		pressureForce.addi(dir.mul(sharedPressure * densitySlope / this.waterDensities[ind]));
+	}
+	return pressureForce;
+}
+		</code></pre>
+		
+		<h3>Viscosity</h3>
+		<p>
+		Viscosity is the term $\mu\nabla^2\vec{V}$. Loosely interpreted, it represents a force in the direction of the 
+		average particle velocity around the particle. $\mu$ is just a coefficient to set how viscous the fluid should be. The effect
+		this has is to make the particle velocities in the fluid more uniform. 
+		</p>
+		
+		<p>
+		Computing the force due to viscosity is very similar to computing density at a location. However, I will use a slightly 
+		different smoothing kernel, one that is more smooth when $r$ is close to 0; $(S^2 - r^2)^3$.
+		</p>
+		
+		<h3>External Forces</h3>
+		<p>
+		Finally, $\rho\vec{g}$ represents any external forces acting upon the fluid, such as gravity or collisions with the bounding
+		box. We just apply these forces sometime during the update loop and it should work. 
+		</p>
+		
+		<h2 id = "SpatialHashing">Spatial Hashing</h2>
+		<p>
+		Now that we have our simulation done, let's do some optimizations. Currently, each particle will check against every other
+		particle in order to compute attributes such as density, pressure force, or viscosity force. But notice that if the distance
+		between two particles is greater than the smoothing radius, they have no effect on each other. Thus, if we can find a way
+		to prevent particles from checking other particles that are outside of the smoothing radius, then we can drastically speed
+		up our simulation. 
+		</p>
+		
+		<p>
+		The idea is to partition space into grid cells, each cell having width and height equal to the smoothing radius. This way, if
+		a particle is inside some grid cell, then all of the particles that can possibly be within it's 
+		smoothing radius have to be in the 9 surrounding grid cells. 
+		</p>
+		
+		<!-- insert image of sebastian lague video on hashing -->
+		<figure>
+			<img src="spatial_hashing_cell_size.png" width="70%">
+			<figcaption>Image Source : <a href="https://www.youtube.com/watch?v=rSKMYc1CQHE">Sebastian Lague</a></figcaption>
+		</figure>
+		
+		<p>
+		Normally, we would just maintain one list per grid cell containing all the particles within it, and update it when the 
+		particles move, but this method comes with a few limitations, namely being that the space that our particles can move around
+		in is limited by the number of lists we have, and that expanding and shrinking lists is not very GPU friendly. Ideally, we 
+		would want a way to do all of these spatial lookups in a single static array. 
+		</p>
+		
+		<p>
+		We can bypass both limitations using the following method: For each particle, we find the coordinates of the grid cell that 
+		it is in and compute a hash value in the range of 0 to the number of particles minus 1. Then, we sort all of the particles 
+		based off of their hash value in ascending order. Finally, we compute an auxillary array that stores for each hash value, 
+		the first index where a particle has that hash value, or -1 if no particle has the hash value. 
+		</p>
+		
+		<pre><code>
+//example grid hash function
+private int computeHash(int x, int y) {
+	x += 403;
+	y += 107;
+	return Math.abs(x * 8443 + y * 251527 + 6037) % nrParticles;
+}
+		</code></pre>
+		
+		<p>
+		Then, when computing something like density, we can just iterate through each of the 9 surrounding cells, and use the 
+		auxillary array to quickly extract all of the particles that have the same hash value as the cell that we are currently 
+		looking at. 
+		</p>
+		
+		<pre><code>
+private int[] dx = new int[] {-1, -1, -1, 0, 0, 0, 1, 1, 1};
+private int[] dy = new int[] {-1, 0, 1, -1, 0, 1, -1, 0, 1};
+
+private List&ltInteger&gt getAdjacent(Vec2 pos) {
+	List&ltInteger&gt adj = new ArrayList&lt&gt();
+	int hashX = (int) (pos.x / smoothingRadius);
+	int hashY = (int) (pos.y / smoothingRadius);
+	for(int i = 0; i &lt 9; i++){
+		int nx = hashX + dx[i];
+		int ny = hashY + dy[i];
+		int nhash = this.computeHash(nx, ny);
+		int startInd = this.hashStartInd[nhash];
+		if(startInd == -1){
+			continue;
+		}
+		for(int j = startInd; j < nrParticles; j++){
+			if(this.hashes[j] != nhash) {
+				break;
+			}
+			adj.add(j);
+		}
+	}
+	return adj;
+}
+
+private Vec2 computeDensity(Vec2 pos) {
+	float density = 0;
+	float nearDensity = 0;
+	ArrayList&ltInteger&gt adj = this.getAdjacent(pos);
+	for(Integer i : adj){
+		//add density
+	}
+	return new Vec2(density, nearDensity);
+}
+		</code></pre>
+		
+		<p>
+		A disadvantage to this method is that if two grid cells have the same hash value, you might waste some time checking a far
+		away grid cell. But that performance hit is ok as long as we can get this to run on a compute shader. 
+		</p>
+		
+		<h2 id = "ComputeShader">Compute Shader</h2>
+		<p>
+		With just spatial hashing 
+		implemented, I can support 1000 particles running at around 60fps. Since the force applied on each particle
+		can be determined purely from looking at the positions and velocities of the other particles in the scene, this simulation is
+		extremely well suited to being run on the GPU, which can potentially speed things up many times over. To do this, we can 
+		make use of <i>Compute Shaders</i>, which are provided by OpenGL version 4.3.
+		</p>
+		
+		<h3>Compute Space</h3>
+		<p>
+		Like how Fragment Shaders work in Screen Space, Compute Shaders work in Compute Space. 
+		Work Groups are the smallest amount of compute operations that the host application can execute at a time. While the work
+		group space is in 3 dimensions, (X, Y, Z), you can set the magnitude of any dimension to 1 to perform the computation in 
+		2 or 1 dimensions. 
+		</p>
+		
+		<figure>
+			<img src="global_work_groups.png" width="70%">
+			<figcaption>Image Source : <a href="https://learnopengl.com/Guest-Articles/2022/Compute-Shaders/Introduction">learnopengl.com</a></figcaption>
+		</figure>
+		
+		<p>
+		During execution, the order in which each work group is executed will vary arbitrarily, and the order of execution should not 
+		be depended on by the algorithm. 
+		</p>
+		
+		<p>
+		Each work group might contain multiple compute shader invocations. The amount of invocations depends on the local size of the 
+		work group, which is also 3 dimensional. 
+		</p>
+		
+		<figure>
+			<img src="local_space_work_groups.png" width="70%">
+			<figcaption>Image Source : <a href="https://learnopengl.com/Guest-Articles/2022/Compute-Shaders/Introduction">learnopengl.com</a></figcaption>
+		</figure>
+		
+		<p>
+		For our purposes, I will set the work group space and local space to 1 dimension, since we are operating on a list of 
+		particles, and each compute shader invocation will process 1 particle. 
+		</p>
+		
+		<h3>Pipeline Overview</h3>
+		<p>
+		In order to convert this into a compute shader, we must first think about the order in which we do things, since some things
+		depend on other things to already be done, for example; computing the pressure force requires that we have already computed
+		the density for all the particles. I ended up settling on the following order:
+		</p>
+		
+		<ol>
+			<li>Update position with velocity, and do boundary collisions. Generate spatial hashes for the predicted positions.</li>
+			<li>Sort particles based off of hash value and generate lookup tables.</li>
+			<li>Compute density and viscosity force for each particle.</li>
+			<li>Compute pressure and interaction forces, and apply pressure, interaction, and viscosity forces to all the particles.</li>
+		</ol>
+		
+		<p>
+		Ideally, we want the data to reside on the GPU, since transferring data between GPU and CPU is very slow. We can store the 
+		data on the GPU by creating 1D textures to act as buffers, and to access the data in the shader, we can pass the textures in
+		as an <code>imageID</code> uniform. To sample from a specific pixel using integer coordinates, we can use the 
+		<code>imageLoad</code> method.
+		</p>
+		
+		<h3>Setting up the Shader</h3>
+		<p>
+		Now, let's write the actual compute shader. I'll only cover the shader for the first step of the pipeline here, as they only
+		differ in the actual stuff they are doing; the setup remains pretty much the same. 
+		</p>
+		
+		<p>
+		First, comes all the setup stuff, like defining the local work group size, and defining some uniforms to be set externally.
+		</p>
+		
+		<pre><code>
+#version 430 core
+
+layout (local_size_x = 64, local_size_y = 1, local_size_z = 1) in;
+
+layout(rgba32f, binding = 0) uniform image1D posvelTexture;
+layout(rgba32f, binding = 1) uniform image1D predictedPosLUTTexture;
+
+uniform float delta_time;
+uniform float predict_delta_time;
+uniform vec2 bounds_min;
+uniform vec2 bounds_max;
+uniform vec2 gravity;
+uniform float boundary_damping;
+
+uniform int nr_particles;
+uniform float smoothing_radius;
+uniform int LUT_P1;
+uniform int LUT_P2;
+uniform int LUT_P3;
+uniform int LUT_P4;
+uniform int LUT_P5;
+		</code></pre>
+		
+		<p>
+		Next, we define some functions that will be helpful when hashing the predicted positions.
+		</p>
+		
+		<pre><code>
+int computeHash(int x, int y) {
+	x += LUT_P4;
+	y += LUT_P5;
+	return abs(x * LUT_P1 + y * LUT_P2 + LUT_P3) % nr_particles;
+}
+
+int computeHash(vec2 pos) {
+	int hash_x = int(pos.x / smoothing_radius);
+	int hash_y = int(pos.y / smoothing_radius);
+	return computeHash(hash_x, hash_y);
+}	
+		</code></pre>
+		
+		<p>
+		Finally, we slap a main method onto it to actually do the computation. 
+		</p>
+		
+		<pre><code>
+void main() {
+	int texelCoord = int(gl_GlobalInvocationID.x);
+	vec4 posvel = imageLoad(posvelTexture, texelCoord);
+	vec2 pos = posvel.rg;
+	vec2 vel = posvel.ba;
+	
+	//update position
+	pos += vel * delta_time;
+	
+	//gravity
+	vel += gravity * delta_time;
+	
+	//boundary collisions
+	{
+		if (pos.x < bounds_min.x) {
+			pos.x = bounds_min.x;
+			vel.x *= -boundary_damping;
+		}
+		if (pos.x > bounds_max.x) {
+			pos.x = bounds_max.x;
+			vel.x *= -boundary_damping;
+		}
+		if (pos.y < bounds_min.y) {
+			pos.y = bounds_min.y;
+			vel.y *= -boundary_damping;
+		}
+		if (pos.y > bounds_max.y) {
+			pos.y = bounds_max.y;
+			vel.y *= -boundary_damping;
+		}
+	}
+	
+	//compute predicted position
+	vec2 predicted_pos = pos + vel * predict_delta_time;
+	
+	//compute hash based off of predicted position
+	int hash = computeHash(predicted_pos);
+	
+	imageStore(posvelTexture, texelCoord, vec4(pos, vel));
+	imageStore(predictedPosLUTTexture, texelCoord, vec4(predicted_pos, float(hash), 0.0));
+}
+		</code></pre>
+		
+		<p>
+		And the shader is done! 
+		</p>
+		
+		<h3>Executing the Shader</h3>
+		<p>
+		Executing the shader is as simple as first setting all the uniforms, and then doing this:
+		</p>
+		
+		<pre><code>
+glDispatchCompute(COMPUTE_NR_PARTICLES / 64, 1, 1);
+		</code></pre>
+		
+		<p>
+		The three arguments just set the amount of work groups in the X, Y, and Z dimensions respectively, and 
+		<code>COMPUTE_NR_PARTICLES</code> is just a variable representing the total amount of particles I'm simulating. 
+		I divide by 64 because that's the local size of each work group. 
+		</p>
+		
+		<p>
+		Of course, since we are running this multiple times on the same buffer, we want to make sure that the previous computation
+		is finished before we start a new one, so right after running the shader, we put a memory barrier so that no new shader 
+		invocation can access the buffer memory before the current invocation is complete. 
+		</p>
+		
+		<pre><code>
+glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
+		</code></pre>
+		
+		<p>
+		After converting the simulation into a compute shader, it can now handle 4000 particles at 60fps, a 4x increase in the number
+		of particles! Since this is my first time working with compute shaders, there are probably a lot of improvements possible,
+		such as adjusting the size of the work groups, or managing memory more efficiently, but I'm happy with the result for now. 
+		</p>
+		
+		<h3>Density Field Rendering</h3>
+		<p>
+		As a bonus, instead of rendering the particles, we can just render the density field that is created by the particles. Using
+		the spatial hash we created, we can use a fragment shader to efficiently sample the density at every point on the screen, 
+		and if it exceeds the density threshold, we'll color the pixel blue. 
+		</p>
+		
+		<p>
+		Since all the particle positions and spatial hashes are already on the GPU, this is extremely efficient to do. 
+		</p>
+		
+		<figure>
+			<img src="density_field_rendering.png" width="70%">
+			<figcaption>The light blue, as opposed to the dark blue, represents the region that is at least 25% as dense as the density threshold.</figcaption>
+		</figure>
+		
+		<p>
+		The rendering in Where's my Water was much nicer, as it had a blur effect if the water was moving quickly, but I think I can 
+		tackle that some other time. 
+		</p>
+		
+	</div>
+</div>
+
+</html>
