@@ -1,0 +1,863 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="ISO-8859-1">
+<title>Portfolio - Path Tracing</title>
+<link rel="stylesheet" href="../../../styles/styles.css">
+</head>
+
+<script src = "https://cdn.jsdelivr.net/npm/p5@1.2.0/lib/p5.js"></script>
+<script src="http://cdnjs.cloudflare.com/ajax/libs/p5.js/0.5.6/addons/p5.dom.js"></script>
+<script src = "../../../js/banner/sketch.js"></script>
+<script src = "../../../js/banner/boid.js"></script>	
+
+<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+<script>
+MathJax = {
+  tex: {
+    inlineMath: [['$', '$'], ['\\(', '\\)']]
+  }
+};
+</script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+<div id = "banner">
+</div>
+
+<div class = "header">
+	<div class = "header-text">
+		<h1>Path Tracing</h1>
+	</div>
+</div>
+	
+<div class = "nav_links">
+	<div class = "nav_link">
+		<a href = "../../../small_projects.html">Small Projects</a>
+	</div>
+	<div class = "nav_link">
+		<a href = "../../../index.html">Main Page</a>
+	</div>
+	<div class = "nav_link">
+		<a href = "../../../about_me.html">About Me</a>
+	</div>
+</div>
+
+<div class = "sidebar">
+	<a href = "#ideas_and_motivation">Ideas and Motivation</a> <br>
+	<a href = "#monte_carlo_integration">Monte Carlo Integration</a> <br>
+	<a href = "#reflection_and_transmission">Reflection and Transmission</a> <br>
+	<a href = "#microfacet_based_bsdfs">Microfacet Based BSDFs</a> <br>
+	<a href = "#collision_detection">Collision Detection</a> <br>
+	<a href = "#further_improvements">Further Improvements</a> <br>
+</div>
+
+<div class = "page">
+	<div class = "blog">
+		<p>
+		I first got inspired to make a basic path tracer by watching the 
+		<a href="https://www.youtube.com/watch?v=Qz0KTGYJtUk">video Sebastian Lague made on the topic</a>. But there were several issues with 
+		his path tracer, namely being unoptimized and not being physically accurate. So in my project, I set out to fix those flaws, and in the process, 
+		solidify my understanding of PBR.  
+		</p>
+		
+		<p>
+		While working on this project, the majority of my theoretical knowledge comes from the excellent book on the subject; 
+		<a href="https://pbr-book.org/4ed/contents">Physically Based Rendering: From Theory to Implementation</a>. It goes over all you need to know
+		about modern physically based rendering, and is definitely worth reading if you're interested in the topic. 
+		</p>
+		
+		<figure>
+			<img src="porcelain_monkey_web.png" width="50%">
+		</figure>
+		
+		<h2 id = "ideas_and_motivation">Ideas and Motivation</h2>
+		<p>
+		If we want to make our renders as realistic as possible, we might think to simulate the behavior of light; after all, our eyes collect light
+		that is reflected from the environment so that we can see. 
+		</p>
+		
+		<p>
+		There is a problem though, it is simply impossible to just simulate every ray of light. So the first main optimization
+		is to simulate light probabilistically; although we can't simulate every ray of light, if we simulate an amount that is sufficiently large,
+		then we can generate a render that is close enough to reality. 
+		</p>
+		
+		<p>
+		The second issue lies in the direction in which we choose to simulate light. If we choose to start light rays from some light emitter in
+		the scene and bounce it around until it hits the camera, we'll end up wasting a lot of effort on rays that never end up hitting the camera. 
+		Instead, if we start our rays from the camera, and bounce them until we hit an emitter, we can guarantee that our rays contribute to the final
+		image. 
+		</p>
+		
+		<p>
+		So, now our process looks kind of like this: all rays have their origin at the camera, and the ray's direction is dependent on the pixel it is
+		contributing towards. After casting many rays, perhaps thousands of rays per pixel, we will converge on an image that is relatively close to 
+		reality. 
+		</p>
+		
+		<h3>Rendering Equation</h3>
+		<p>
+		At this point, we should consider how light is actually getting to the camera, as currently, the rays we send out don't mean anything. 
+		But first, let's define some functions. $L_o(p, \vec{\omega})$ is the amount of outgoing light from the point $p$ in the direction 
+		$\vec{\omega}$. Similarly, $L_i(p, \vec{\omega})$ is the amount of light incident on $p$ from the direction $\vec{\omega}$. 
+		Finally, $t(p, \vec{\omega})$ is the first point at which the ray with origin $p$ and direction $\vec{\omega}$ intersects with the
+		geometry in our scene. 
+		</p>
+		
+		<p>
+		Let's consider one ray cast from the camera at point $c$ first intersecting with the scene geometry at point $p$. Our ultimate goal 
+		is to find $L_o(p, \vec{c - p})$, as this is the light that the camera can see. 
+		</p>
+		
+		<p>
+		Before we compute the total amount of light that is reflected from $p$ in the direction $\vec{\omega_o}$, let's just consider one incoming 
+		direction $\vec{\omega_i}$. If we know the amount of light incident on $p$ in the direction $\vec{\omega_i}$, then we can compute how much 
+		light is reflected in the direction $\vec{\omega_o}$ due to the light incoming from $\vec{\omega_i}$: 
+		$L_i(p, \vec{\omega_i})B(p, \vec{\omega_o}, \vec{\omega_i})(\vec{n} \cdot \vec{\omega_i})$.
+		</p>
+		
+		<!-- Image of hemisphere with incident and outgoing vectors -->
+		<figure>
+			<img src="one_dir_hemisphere.png" width="35%">
+		</figure>
+		
+		<p>
+		$(\vec{n} \cdot \vec{\omega_i})$ accounts for the cosine law, this is due to light with a 
+		larger angle relative to the normal being more spread out on the surface, leading to lower radiance per unit area. 
+		$B(p, \vec{\omega_o}, \vec{\omega_i})$ is known as the <i>BSDF</i> function. I'll discuss it more in depth later, but for now all you 
+		need to know is that it takes in properties of the surface of $p$, and an outgoing and incident light direction, $\vec{\omega_o}$ 
+		and $\vec{\omega_i}$, and returns the percentage of light reflected along $\vec{\omega_o}$ from $\vec{\omega_i}$. 
+		</p>
+		
+		<p>
+		Now, to compute $L_i(p, \vec{\omega_i})$, we can simply integrate over all possible $\vec{\omega_i}$, which form a hemisphere around $p$ centered
+		around the surface normal $\vec{n}$. We have just derived the <i>Rendering Equation</i>.  
+		</p>
+		
+		<p>$$L_o(p, \vec{\omega_o}) = L_e(p) + \int L_i(p, \vec{\omega_i})B(p, \vec{\omega_o}, \vec{\omega_i})(\vec{n} \cdot \vec{\omega_i}) d\vec{\omega_i}$$</p>
+		
+		<p>
+		Emitted light is accounted for by the $L_e(p)$ term. Notice that $L_e$ doesn't have a directional argument, this is because I assume light is 
+		emitted uniformly in all directions. 
+		</p>
+		
+		<p>
+		One important thing to note is that the value of $L_i(p, \vec{\omega_i})$ is not known. To solve for it, we can first observe that
+		the light incoming from the direction $\vec{\omega_i}$ has to come from some surface in the direction $\vec{\omega_i}$, thus 
+		$L_i(p, \vec{\omega_i}) = L_o(t(p, \vec{\omega_i}), -\vec{\omega_i})$. To solve for $L_o(t(p, \vec{\omega_i}), -\vec{\omega_i})$, we once again
+		will need to use the rendering equation, leading to a recursively nested integral. 
+		</p>
+		
+		<h2 id = "monte_carlo_integration">Monte Carlo Integration</h2>
+		<p>
+		Since we are required to evaluate an infinitely nested integral in the rendering equation, an analytical solution is going 
+		to be extremely difficult if not impossible to find in all but the simplest situations. This is why we use Monte Carlo integration 
+		to evaluate it numerically. 
+		</p>
+		
+		<h3>Probability Review</h3>
+		<p>
+		Let's say we are given a fair 6 sided die that when rolled, gives us a uniform random integer value in the range $[1, 6]$. We can define the 
+		<i>Probability Mass Function</i> or <i>PMF</i> $p$ of this die as $p(x) = \frac{1}{6}$ for all $x$ in the domain $[1, 6]$. The PMF just gives
+		us the probability of rolling whatever number $x$ is, and since it is a fair die, the probability for any number is naturally 
+		$\frac{1}{6}$.  
+		</p>
+		
+		<p>
+		The <i>Cumulative Distribution Function</i> $P$ of a distribution just gives the probability of getting a value less than or equal to $x$. 
+		In our dice example, $P(2) = \frac{1}{3}$ because we have a $\frac{1}{3}$ chance of rolling a 2 or a 1. 
+		</p>
+		
+		<p>
+		The <i>Probability Density Function</i> $p$ is the continuous analog of the PMF. It doesn't make sense to define
+		it directly, as the probability of landing on any given value in a continuous distribution is 0 (except in the case of the dirac delta function),
+		so we will instead define it as the derivative of the CDF $P$ that describes the same distribution. 
+		</p>
+		
+		<p>$$p(x) = \frac{d}{dx} P(x)$$</p>
+		
+		<p>
+		The value of a PDF is necessarily non-negative and they always integrate to 1 over their domains. However, the value at a point $x$ is not 
+		necessarily less than 1.
+		What the PDF tells us is relative probability. For example, if $p(1) = \frac{1}{4}$ and $p(2) = \frac{1}{2}$, getting a 2 from the 
+		distribution is twice as likely as getting a 1. Note that for any uniform random distribution, $p(x)$ should return a constant value 
+		in the domain.
+		</p>
+		
+		<p>
+		Due to the Fundamental Theorem of Calculus and the definition of the PDF, we can integrate the PDF over some range for the probability of getting
+		a value in the range. 
+		</p>
+		
+		<p>$$\int_a^b p(x) dx = P(b) - P(a)$$</p>
+		
+		<h3>Expected Value</h3>
+		<p>
+		The <i>expected value</i> $E[f(x)]$ of a function $f$ is defined as the average value over some PDF $p$ over it's domain $D$. 
+		It is defined as
+		</p>
+		
+		<p>$$E[f(x)] = \int_D f(x)p(x) dx$$</p>
+		
+		<p>
+		For example, if we want to find the expected value of $\sin(x)$ in the range $[0, \pi]$ given a uniform random distribution in that range, 
+		we just need to evaluate
+		</p>
+		
+		<p>$$E[f(x)] = \int_0^\pi \sin(x)\frac{1}{\pi} dx$$</p>
+		
+		<p>
+		Since we have a uniform random distribution, $p(x)$ should evaluate to some constant, and integrate to 1 over the domain $[0, \pi]$. 
+		The constant $\frac{1}{\pi}$ satisfies both of these conditions. 
+		</p>
+		
+		<p>
+		These are some useful properties of expected values that we will use later:
+		</p>
+
+		<p>$$E[\sum_{i = 1}^{n} f(x)] = \sum_{i = 1}^{n} E[f(x)]$$</p>
+		<p>$$E[af(x)] = a E[f(x)]$$
+		
+		<h3>Monte Carlo Estimator</h3>
+		<p>
+		Given some integral, $\int_a^b f(x) dx$, how can we evaluate it probabilistically? Enter, the Monte Carlo Estimator, which is defined as
+		</p>
+		
+		<p>$$F_n = \frac{b - a}{n} \sum_{i = 1}^{n} f(R_i)$$</p>
+		
+		<p>
+		where $R_i$ is a uniform random value in the range $[a, b]$. We can show that the expected value of $F_n$, $E[F_n]$, is equal to 
+		$\int_a^b f(x) dx$:
+		</p>
+		
+		<p>
+		$$E[F_n] = E[\frac{b - a}{n} \sum_{i = 1}^{n} f(R_i)]$$
+		$$= \frac{b - a}{n} \sum_{i = 1}^{n} E[f(R_i)]$$
+		$$= \frac{b - a}{n} \sum_{i = 1}^{n} \int_a^b f(x)p(x) dx$$
+		</p>
+		
+		<p>
+		Since $R_i$ is a uniform random variable in the range $[a, b]$, $p(x) = \frac{1}{b - a}$. 
+		</p>
+		
+		<p>
+		$$= \frac{1}{n} \sum_{i = 1}^{n} \int_a^b f(x) dx$$
+		$$= \int_a^b f(x) dx$$
+		</p>
+		
+		<p>
+		The restriction to using uniform random distributions can be removed using the following generalization:
+		</p>
+		
+		<p>$$F_n = \frac{1}{n} \sum_{i = 1}^{n} \frac{f(R_i)}{p(R_i)}$$</p>
+		
+		<p>
+		Similarly, we can show that $E[F_n]$ is equal to $\int_a^b f(x) dx$:
+		</p>
+		
+		<p>
+		$$E[F_n] = E[\frac{1}{n} \sum_{i = 1}^{n} \frac{f(R_i)}{p(R_i)}]$$
+		$$= \frac{1}{n} \sum_{i = 1}^{n} E[\frac{f(R_i)}{p(R_i)}]$$
+		$$= \frac{1}{n} \sum_{i = 1}^{n} \int_a^b \frac{f(x)}{p(x)} p(x) dx$$
+		$$= \int_a^b f(x) dx$$
+		</p>
+		
+		<p>
+		It is important to be able to choose any random distribution, since carefully choosing the distribution from which samples are drawn leads to 
+		a key technique to reduce error known as <i>Importance Sampling</i>. 
+		</p>
+		
+		<h3>Importance Sampling</h3>
+		<p>
+		Consider that we are trying to integrate a gaussian function centered at 0 with $\sigma = 1$ in the range $[-100, 100]$. If we were to 
+		uniformly sample the range, then only a small fraction of samples would be significant to the value of the integral. 
+		Instead if we were to instead choose samples according to a gaussian distribution centered at 0 with $\sigma = 1$, then it would greatly speed up
+		the rate of convergence because it would preferentially sample values that will actually contribute something to the final answer. 
+		</p>
+		
+		<p>
+		Going back to our Monte Carlo Estimator, we can see how it handles the case where the distribution of random values is non-uniform; 
+		if we are twice as likely to pick some value, we weight it half as much as other samples. This makes it so that the expected value 
+		isn't affected by what sampling distribution we choose. 
+		</p>
+		
+		<p>$$F_n = \frac{1}{n} \sum_{i = 1}^{n} \frac{f(R_i)}{p(R_i)}$$</p>
+		
+		<p>
+		Of course, the 'correct' choice of sampling distribution depends heavily on the integral we are evaluating. Thankfully, since 
+		rendering integrals have physical meaning, we can guess our way to a reasonable sampling distribution using intuition. 
+		</p>
+		
+		<h2 id = "reflection_and_transmission">Reflection and Transmission</h2>
+		<p>
+		Next, we must have some way to model how light interacts with surfaces. 
+		We'll first look at how to handle perfectly smooth surfaces, and later we'll use a microfacet surface model to approximate rough surfaces. 
+		</p>
+		
+		<h3>Index of Refraction</h3>
+		<p>
+		The <i>Index of Refraction</i> or <i>IOR</i> of a material tells us how fast light moves through it compared to through vacuum. 
+		If the velocity of light through the material is given by $v$, then the IOR $\eta$ is given by 
+		</p>
+		
+		<p>$$\eta = \frac{c}{v}$$</p>
+		
+		<p>
+		Counter intuitively, even non-transmissive materials have IORs, and it's important to know these IORs so that we can accurately model
+		specular reflections. 
+		</p>
+		
+		<h3>Snell's Law</h3>
+		<p>
+		Snell's Law tells us <i>where</i> refracted light goes. Snell's Law is
+		</p>
+		
+		<!-- snell's law -->
+		<p>$$\eta_i\sin(\theta_i) = \eta_t\sin(\theta_t)$$</p>
+		
+		<p>
+		where $\eta_i$ and $\eta_t$ are the incident and transmitted mediums IORs, and $\theta_i$ and $\theta_t$ are the angles relative to the 
+		surface normal $\mathbf{n}$ the path of light makes in the incident and transmitted mediums. Intuitively, if light enters a medium that 
+		is more optically dense ($\eta_t > \eta_i$), then it's path is bent towards the surface normal, and away if the new material is less 
+		optically dense. 
+		</p>
+		
+		<!-- snells law -->
+		<figure>
+			<img src="snells_law.png" width="50%">
+		</figure>
+		
+		<p>
+		The IOR of a material varies depending on the wavelength of light and this makes different colors bend different amounts, 
+		resulting in dispersion. 
+		As it varies by only a very small amount over the visible light range, I make the simplifying assumption that it doesn't vary, 
+		and ignore dispersion entirely. 
+		</p>
+		
+		<p>
+		In the case that light is traveling into a medium that is less optically dense, the interface turns into an ideal
+		reflector at certain angles so that no light is transmitted. This phenomenon, dubbed <i>total internal reflection</i>, happens when 
+		$\theta_i$ is greater than the critical angle $\theta_c = \sin^{-1}(\eta_t / \eta_i)$. Notice that $\sin^{-1}(\eta_t / \eta_i)$ is only
+		defined when $\eta_t < \eta_i$.
+		</p>
+		
+		<h3>Fresnel</h3>
+		<p>
+		The Fresnel (pronounced fruh$\cdot$<b>nel</b>) equations describe <i>how much</i> light gets specularly reflected given some incident 
+		angle with the normal. The fresnel equations for dielectrics are
+		</p>
+		
+		<!-- fresnel equations -->
+		<p>
+		$$r_\parallel = \frac{\eta_t\cos(\theta_i) - \eta_i\cos(\theta_t)}{\eta_t\cos(\theta_i) + \eta_i\cos(\theta_t)}$$
+		$$r_\perp = \frac{\eta_i\cos(\theta_i) - \eta_t\cos(\theta_t)}{\eta_i\cos(\theta_i) + \eta_t\cos(\theta_t)}$$
+		</p>
+		
+		<p>
+		where $r_\parallel$ is the reflectance for parallel polarized light and $r_\perp$ is the reflectance for perpendicular polarized light, 
+		and $\eta_i$ and $\eta_t$ are the IORs of the incident and transmitted materials respectively. Here, I will again make a simplifying assumption
+		that all the light in our scene is unpolarized, which means that the final fresnel reflectance is 
+		</p>
+		
+		<!-- final fresnel reflectance -->
+		<p>$$F_r = \frac{r_\parallel^2 + r_\perp^2}{2}$$</p>
+		
+		<p>
+		and due to conservation of energy, the portion of transmitted light is equal to $1 - F_r$. 
+		</p>
+		
+		<p>
+		If the material we are considering is a conductor, the IOR turns into a complex number. The real component describes the change 
+		in speed like we are used to, and the newly added imaginary component models the decay of light as it travels into the material.
+		The imaginary component, also known as the extinction coefficient, varies depending on the wavelength of light, and it is this extinction 
+		coefficient distribution that gives conductors their different hues.  
+		</p>
+		
+		<p>
+		Since I don't want to have to sample across the light wavelength spectrum, I will just keep the IOR of conductors as real numbers, 
+		and treat them like dielectrics with very high IORs. 
+		</p>
+		
+		<h3>Diffuse Reflections</h3>
+		<p>
+		The light that is not reflected specularly must be transmitted through the material. But if the material is not transmissive, 
+		eg. is not glass, then where does the light go?
+		</p>
+		
+		<p>
+		In the case the material is a conductor the light is simply absorbed, therefore conductors do not have diffuse reflections. 
+		</p>
+		
+		<p>
+		Otherwise, if the material is dielectric, the particles within the material will bounce the light around until it exits the material. For
+		materials that don't exhibit subsurface scattering behaviour, such as matte paint or porcelain, it's acceptable to assume that the exit
+		location is the same as the entrance location. However, the exit direction will vary wildly; according to the Lambertian model of diffuse 
+		reflections, exit directions will be uniformly distributed over the hemisphere regardless of the incident direction. 
+		</p>
+		
+		<h2 id = "microfacet_based_bsdfs">Microfacet Based BSDFs</h2>
+		<p>
+		A <i>Bidirectional Scattering Distribution Function</i> or <i>BSDF</i> takes in an incident direction, reflection / transmission direction, and 
+		various surface material properties such as IOR, conductiveness, and roughness, and returns the percentage of light that gets scattered from
+		the incident direction to the outgoing reflection / transmission direction. Usually, BSDFs are split into two parts, one for reflection and one
+		for transmission aptly named <i>BRDF</i> and <i>BTDF</i>. 
+		</p>
+		
+		<p>
+		In order to model roughness, some BSDFs are microfacet based. 
+		Microfacet models are based on the idea that surfaces can be modeled as a collection of microfacets, which
+		are microscopic, perfectly reflective mirrors. 
+		The orientation of the microfacets depend on the macrosurface normal, and the roughness of the surface which is usually given by some 
+		parameter in the range $[0, 1]$. The rougher the surface, the more variance there is in the orientation of microfacets. 
+		</p>
+		
+		<!-- comparison between smooth and rough microfacet surface -->
+		<figure>
+			<img src="microfacets.png" width="60%">
+			<figcaption>Image from <a href="https://learnopengl.com/PBR/Theory">learnopengl.com</a></figcaption>
+		</figure>
+		
+		<p>
+		Microfacet based BSDF models work by statistically modeling the scattering of light from a large collection of microfacets. If we consider that
+		the size of each microfacet is much smaller than the differential area that is illuminated by a single ray of light, then it is their aggregate
+		behaviour that determines the observed scattering. 
+		This also means that once we determine the microfacet normal, we can just treat the surface as perfectly smooth when computing the amount of
+		light that is reflected/refracted, making calculations substantially easier. 
+		</p>
+		
+		<p>
+		In my project, I use the Cook Torrance BRDF, which is a microfacet based BRDF developed in the 1980s. It is described as
+		</p>
+		
+		<!-- cook torrance brdf -->
+		<p>$$B = \frac{DFG}{4(\vec{\omega_i} \cdot \vec{n})(\vec{\omega_r} \cdot \vec{n})}$$</p>
+		
+		<p>
+		where $\vec{n}$ is the surface normal, and $\vec{\omega_i}$ and $\vec{\omega_r}$ are the incident and reflected directions of light respectively. 
+		The variables $D$, $F$, and $G$ are actually functions, being the <i>Normal <b>D</b>istribution Function</i>, the <i><b>G</b>eometry Function</i>,
+		and <b>F</b>resnel, which you should be familiar with. While fresnel describes how much light is reflected due to material properties of
+		the surface, the normal distribution function and geometry function are more concerned with the microfacets themselves, considering
+		their average orientation with respect to the macrosurface normal, and self shadowing behaviour. 
+		</p>
+		
+		<h3>Normal Distribution Function</h3>
+		<p>
+		The Normal Distribution Function approximates the relative surface area of microfacets exactly aligned to the macrosurface normal. 
+		I used the Beckmann distribution function which is given by
+		</p>
+		
+		<p>$$D = \frac{\chi^+(\vec{h} \cdot \vec{n})}{\pi \alpha^2 (\vec{h} \cdot \vec{n})^4} e^{\frac{-\tan^2(\theta_h)}{\alpha^2}}$$</p>
+		
+		<p>
+		where $\vec{h}$ is the microfacet normal, $\vec{n}$ is the macrosurface normal, $\alpha$ is roughness, and $\chi^+$ is defined as 
+		</p>
+		
+		<p>
+		$$\chi^+(x) = 
+		\begin{cases} 
+    		1, &x > 0 \\ 
+    		0, &\text{otherwise} \\
+		\end{cases}
+		$$
+		</p>
+		
+		<h3>Geometry Function</h3>
+		<p>
+		The Geometry Function approximates the amount of surface area where microfacets occlude each other. The function I use is a combination of
+		the GGX and Schlick-Beckmann approximations known as Schlick-GGX
+		</p>
+		
+		<p>$$G_{Schlick-GGX}(\vec{v}) = \frac{\vec{n} \cdot \vec{v}}{(\vec{n} \cdot \vec{v})(1 - k) + k}$$</p>
+		
+		<p>
+		where $\vec{n}$ is the macrosurface normal and $k$ is defined as 
+		</p>
+		
+		<p>$$k = \frac{(1 + \alpha)^2}{8}$$</p>
+		
+		<p>
+		In order to fully approximate shadowing, we need to take into account both incident and outgoing direction. We can take both into account 
+		using Smith's method:
+		</p>
+		
+		<p>$$G_{Smith} = G_{GGX}(\vec{i}) G_{GGX}(\vec{r})$$</p>
+		
+		<p>
+		where $\vec{i}$ and $\vec{r}$ are the incident and reflected directions of light respectively. 
+		</p>
+		
+		<h3>Importance Sampling</h3>
+		<p>
+		We want to importance sample the distribution term to get a microfacet normal, and then
+		use this microfacet normal to generate the specular reflection direction. 
+		</p>
+		
+		<p>
+		Given two uniform random variables in the range $[0, 1]$, $\zeta_1$ and $\zeta_2$, we can generate the microfacet normal angles, 
+		relative to the macrosurface normal
+		</p>
+		
+		<p>
+		$$\theta_m = \arctan\sqrt{\alpha^2 \log(1 - \zeta_1)}$$
+		$$\phi_m = 2 \pi \zeta_2$$
+		</p>
+		
+		<p>
+		Notice how while the elevation angle $\theta_m$ is relatively fixed, the microsurface normal is free to rotate around the macrosurface normal
+		via $\phi_m$. 
+		</p>
+		
+		<p>
+		We also need to find some PDF for our importance sampling distribution. For this distribution, the PDF is given by
+		</p>
+		
+		<p>
+		$$p(\vec{h}) = \frac{D(\vec{h}) (\vec{h} \cdot \vec{n})}{4 (\vec{i} \cdot \vec{h})}$$
+		</p>
+		
+		<p>
+		where $D$ is the distribution function, $\vec{h}$ is the microsurface normal, $\vec{n}$ is the macrosurface normal, and $\vec{i}$ is the 
+		incident light direction. 
+		</p>
+		
+		<h3>Adding Diffuse Reflections</h3>
+		<p>
+		Next, we need to figure out a way to deal with the portion of light that isn't specularly reflected, represented by $1 - F$. We can use 
+		the lambertian diffuse to handle this leftover portion of light. 
+		</p>
+		
+		<p>
+		However, there is a problem. In order to properly represent lambertian diffuse reflections, we need to sample uniformly across the entire
+		hemisphere. But the Cook Torrance BRDF requires us to sample only in the specular reflection direction. 
+		</p>
+		
+		<p>
+		In order to combine these two models, we can generate the microfacet normal and compute $F$ like usual. Then, we use $F$ as the probability 
+		that this ray of light bounces specularly, and $1 - F$ as the probability for a diffuse reflection. After we've decided on what type of 
+		reflection we want, the rest of the computations should be pretty straightforwards, with one caveat being that the PDF for each type of
+		reflection needs to be multiplied by $\frac{1}{p}$, where $p$ is the probability for that type of reflection, on top of the normal PDF. 
+		</p>
+		
+		<h3>Transmission</h3>
+		<p>
+		In the case that the material is transmissive, instead of doing a diffuse reflection, the light represented by $1 - F$ is going to 
+		be refracted through the surface. Like diffuse reflections, we can treat the $1 - F$ term as the probability in which a light ray will refract,
+		and adjust the PDF accordingly. Keep in mind the case of total internal reflection, in which $F = 1$. 
+		</p>
+		
+		<h2 id = "collision_detection">Collision Detection</h2>
+		<p>
+		Finally, let's discuss how to efficiently do ray-scene collisions. 
+		</p>
+		
+		<h3>Ray-Primitive Collisions</h3>
+		<p>
+		The basic building blocks of every scene are primitives. These are shapes that we can easily compute ray intersections, and we combine
+		them to create complicated scenes. 
+		</p>
+		
+		<p>
+		To store hit information, I made a struct called <code>HitInfo</code>.
+		</p>
+		
+		<pre><code>
+struct HitInfo {
+	bool didHit;
+	float dist;
+	vec3 hitPoint;
+	vec3 hitNormal;
+	Material hitMaterial;
+	bool is_internal;
+};
+		</code></pre>
+		
+		<p>
+		It stores some useful information about the result of the ray-primitive collision, such as location of hit, normal of the surface at the hit
+		location, and so on. One thing I would like to point out is the flag <code>is_internal</code>. This tells the caller whether or not the ray
+		hit the 'interior' of a primitive, and is useful when you are modeling transmittive materials such as glass. 
+		</p>
+		
+		<p>
+		The only primitives I implemented were triangles and spheres. I'll provide a ray collision detection implementation for both of them. 
+		</p>
+		
+		<h4>Ray vs. Triangle</h4>
+		<p>
+		A triangle is defined using 3 points, so my triangle struct just has these 3 points.
+		</p>
+		
+		<pre><code>
+struct Triangle {
+	vec3 a;
+	vec3 b;
+	vec3 c;
+	Material material;
+};
+		</code></pre>
+		
+		<p>
+		The order of the points matter for defining the orientation of the triangle, I define the normal $\vec{n}$ of the triangle as 
+		</p>
+		
+		<p>$$\vec{n} = (b - a) \times (c - b)$$</p>
+		
+		<p>
+		The normal is always pointing in the 'outwards' direction, so if $\vec{n} \cdot \vec{r} > 0$, where $\vec{r}$ is the ray direction,
+		the ray has to collide with the triangle on the 'interior' side. 
+		</p>
+		
+		<pre><code>
+HitInfo rayTriangle(Ray ray, Triangle triangle) {
+	HitInfo ret = createHitInfo();
+	
+	vec3 t0 = triangle.a.xyz;
+	vec3 t1 = triangle.b.xyz;
+	vec3 t2 = triangle.c.xyz;
+	
+	vec3 d0 = normalize(t1 - t0);
+	vec3 d1 = normalize(t2 - t1);
+	vec3 d2 = normalize(t0 - t2);
+	
+	vec3 plane_origin = t0;
+	vec3 plane_normal = normalize(cross(d0, d1));
+	
+	if(dot(plane_normal, ray.dir) > 0) {
+		//ray dir and plane normal are facing in the same direction, so it must be an internal hit
+		ret.is_internal = true;
+		
+		//reverse plane normal so that the rest of calculations work
+		t0 = triangle.a.xyz;
+		t1 = triangle.c.xyz;
+		t2 = triangle.b.xyz;
+		
+		d0 = normalize(t1 - t0);
+		d1 = normalize(t2 - t1);
+		d2 = normalize(t0 - t2);
+		
+		plane_origin = t0;
+		plane_normal = normalize(cross(d0, d1));
+	}
+	
+	//see if ray origin is already past the plane
+	if(dot(plane_normal, ray.origin - plane_origin) < 0.0001) {
+		return ret;
+	} 
+
+	//calculate intersection point between ray and plane defined by triangle
+	//for each step in ray_dir, you go ray_dirStepRatio steps towards the plane
+	float ray_dirStepRatio = dot(plane_normal, ray.dir);	
+	// in plane_normal
+	if (ray_dirStepRatio == 0) {
+		// ray is parallel to plane, no intersection
+		return ret;
+	}
+	
+	float t = dot(plane_origin - ray.origin, plane_normal) / ray_dirStepRatio;
+	vec3 plane_intersect = ray.origin + (ray.dir * t);
+
+	// now, we just have to make sure that the intersection point is inside the triangle.
+	vec3 n0 = cross(d0, plane_normal);
+	vec3 n1 = cross(d1, plane_normal);
+	vec3 n2 = cross(d2, plane_normal);
+	
+	if(dot(n0, t0 - plane_intersect) < 0 || 
+	   dot(n1, t1 - plane_intersect) < 0 || 
+	   dot(n2, t2 - plane_intersect) < 0) {
+		//intersection point is outside of the triangle
+		return ret;
+	}
+	
+	ret.didHit = true;
+	ret.dist = t;	//ray.dir has to be normalized on function call for this to work
+	ret.hitPoint = plane_intersect;
+	ret.hitNormal = plane_normal;
+	ret.hitMaterial = triangle.material;
+
+	return ret;
+}
+		</code></pre>
+		
+		<h4>Ray vs. Sphere</h4>
+		<p>
+		A sphere can be defined by a center position, and a radius
+		</p>
+		
+		<pre><code>
+struct Sphere {
+	vec3 center;
+	float radius;
+	Material material;
+};
+		</code></pre>
+		
+		<p>
+		We can turn a ray sphere intersection into solving a quadratic equation. And whether or not the intersection is internal is decided by
+		if the ray origin is inside the sphere. 
+		</p>
+		
+		<pre><code>
+HitInfo raySphere(Ray ray, Sphere sphere) {
+	HitInfo ret = createHitInfo();
+	vec3 sphereCenter = sphere.center.xyz;
+	float sphereRadius = sphere.radius;
+	vec3 offsetRayOrigin = ray.origin - sphereCenter;
+	
+	float a = dot(ray.dir, ray.dir);
+	float b = 2.0 * dot(offsetRayOrigin, ray.dir);
+	float c = dot(offsetRayOrigin, offsetRayOrigin) - sphereRadius * sphereRadius;
+	
+	float d = b * b - 4.0 * a * c;
+	
+	if(d >= 0){
+		float dist = (-b - sqrt(d)) / (2.0 * a);
+		
+		if(dist > 0.0001){
+			//we must be outside the sphere
+			
+			ret.didHit = true;
+			ret.dist = dist;
+			ret.hitPoint = ray.origin + ray.dir * dist;
+			ret.hitNormal = normalize(ret.hitPoint - sphereCenter);
+			ret.hitMaterial = sphere.material;
+		}
+		else {
+			//we are inside the sphere
+			dist = (-b + sqrt(d)) / (2.0 * a);
+			
+			if(dist > 0.0001) {
+				ret.is_internal = true;
+				ret.didHit = true;
+				ret.dist = dist;
+				ret.hitPoint = ray.origin + ray.dir * dist;
+				ret.hitNormal = -normalize(ret.hitPoint - sphereCenter);
+				ret.hitMaterial = sphere.material;
+			}
+		}
+	}
+	return ret;
+}
+		</code></pre>
+		
+		<h3>Bounding Volume Hierarchies</h3>
+		<p>
+		A brute force implementation of ray-scene collision detection will loop over every primitive for a given ray, and return the closest collision
+		found. Since there may be millions of primitives in a scene, and there are millions of pixels to render, each needing a few thousand samples
+		to converge, this is probably not a good strategy. 
+		</p>
+		
+		<p>
+		By using a <i>Bounding Volume Hierarchy</i>, or <i>BVH</i>, we can make ray-scene collision have roughly logarithmic time complexity relative
+		to the number of primitives in the scene, quite a drastic improvement. 
+		</p>
+		
+		<p>
+		The main idea is to pack primitives in the scene into bounding boxes, such that for a group of primitives, if the ray doesn't intersect the 
+		bounding box, it is guaranteed to not intersect any of the primitives in the group. In the case a ray does intersect a bounding box, we will then
+		have a further subdivision into two smaller primitive groups, and do another check. This way, we can safely eliminate unnecessary ray
+		vs primitive checks, and only test the ones that are likely to intersect with the ray. 
+		</p>
+		
+		<p>
+		To build the BVH, we first group all the primitives into one big bounding box. Then, we recursively subdivide the bounding box groups, 
+		forming a hierarchy of bounding boxes, until we either get to a single primitive, or subdividing doesn't improve our performance 
+		heuristic. 
+		</p>
+		
+		<h4>Optimal Bounding Box Partition</h4>
+		<p>
+		Given a group of primitives, how do we find the optimal subdivision? If we don't subdivide the group, we will incur a cost of 
+		</p>
+		
+		<p>$$\sum_{i = 0}^N t_{\text{isect}}(i)$$</p>
+		
+		<p>
+		where $N$ is the number of primitives, and $t_{\text{isect}}(i)$ is the amount of time required to do the intersection test for the $i$th 
+		primitive. 
+		</p>
+		
+		<p>
+		Instead, if we do the subdivision, our cost will be 
+		</p>
+		
+		<p>$$t_{\text{trav}} + p_A \sum_{i = 0}^A t_{\text{isect}}(i) + p_B \sum_{i = 0}^B t_{\text{isect}}(i)$$</p>
+		
+		<p>
+		where $A$ and $B$ are the number of primitives in the two groups, $t_{\text{trav}}$ is the BVH traversal cost, and $p_A$ and $p_B$ are the
+		probabilities of the ray intersecting the bounding boxes of the two groups. 
+		</p>
+		
+		<p>
+		$p_A$ and $p_B$ can be computed using the <i>Surface Area Heuristic</i>. If we have a big bounding box $B$, and a randomly generated ray that 
+		passes through this bounding box, then the probability that this ray also intersects a smaller bounding box $A$ completely contained within
+		$B$ is 
+		</p>
+		
+		<p>$$\frac{SA(A)}{SA(B)}$$</p>
+		
+		<p>
+		where the function $SA(X)$ gives the surface area of the bounding box $X$. 
+		</p>
+		
+		<p>
+		We can also make the simplifying assumption that $t_{\text{isect}}$ is the same for all primitives, assigning it a value of $1$. Then, 
+		we can also assign $t_{\text{trav}}$ the value $0.5$. These values seem to give the BVH decent performance. 
+		</p>
+		
+		<p>
+		In order to find a decent subdivision, we first generate a bounding box for all primitives, and find the center for each bounding box. 
+		Then, we find the axis of greatest separation, i.e. the axis, x, y, z, in which the maximum distance along the axis of two bounding
+		box centers are the greatest. 
+		</p>
+		
+		<p>
+		Then, we sort all the bounding boxes along this axis, and just test all $N - 1$ partitions using the heuristic I mentioned earlier. In the case
+		where subdividing always increases the cost, we can just stop subdividing and just do a brute force check. 
+		</p>
+		
+		<h3>BVH Serialization</h3>
+		<p>
+		When generating the BVH on the CPU, it's likely that you use some sort of node datastructure to store the relationships between
+		parent and child bounding boxes. But since it's likely that we're doing rendering on the GPU, we'll want to have our BVH stored
+		in a buffer. Converting a structure such that it can be stored in a contiguous section of memory is called <i>serialization</i>.
+		</p>
+		
+		<p>
+		To serialize a BVH, we are looking at two cases, serializing a leaf node, and serializing an internal node. Leaf nodes are relatively easy, 
+		we just need to store how many primitives there are, and then serialize the primitives. For an internal node, we simply need to store the
+		offsets to the children of this node. There is one small optimization we can do here, we can neglect storing the offset to the first child
+		if we just assume that the first child starts right after the last offset. 
+		</p>
+		
+		<h3>BVH Traversal</h3>
+		<p>
+		Once we have our BVH on the GPU, how can we most efficiently traverse it? Ideally, we want to do it all iteratively, as recursion is slow, 
+		and many GPU languages don't even support recursion. 
+		</p>
+		
+		<p>
+		The idea is that we can simulate the recursion iteratively. We'll keep an array as a stack to keep track of offsets of nodes in the BVH 
+		that we still need to visit. 
+		When processing a node, we can push to the stack in the case we find the ray intersects a child bounding box. 
+		In most cases, an array of size 128 will be sufficient. 
+		</p>
+		
+		<h2 id = "further_improvements">Further Improvements</h2>
+		<p>
+		Here are some ideas on how to improve on my current project:
+		</p>
+		
+		<ul>
+			<li>Use <i>light sampling</i>, a technique that directly samples light sources every bounce. The problem with this technique is that 
+			I don't know to make it handle transmissive objects in the scene.</li>
+			<li>Implement an anisotropic BRDF such as the Ashikhmin-Shirley BRDF. An anisotropic BRDF allows us to model materials that don't reflect
+			light the same way in every direction, such as brushed metals.</li>
+			<li>Use <i>Linear Bounding Volume Hierarchies</i> to speed up construction of BVHs.</li>
+			<li>Instead of sampling RGB color, use the more physically accurate spectrum representation of light. This also makes it so that we can 
+			handle dispersion.</li>
+			<li>Add texturing for triangles, so I can properly render 3D mesh models.</li>
+		</ul>
+		
+	</div>
+</div>
+
+</html>
