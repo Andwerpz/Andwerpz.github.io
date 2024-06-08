@@ -11,15 +11,24 @@
 <script src = "../../../js/banner/sketch.js"></script>
 <script src = "../../../js/banner/boid.js"></script>	
 
-<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
-<script>
-MathJax = {
-  tex: {
-    inlineMath: [['$', '$'], ['\\(', '\\)']]
-  }
-};
-</script>
-<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      jax: ["input/TeX", "output/HTML-CSS"],
+      extensions: ["tex2jax.js"],
+      "HTML-CSS": { preferredFont: "TeX", availableFonts: ["STIX","TeX"] },
+      tex2jax: { inlineMath: [ ["$", "$"], ["\\(","\\)"] ], displayMath: [ ["$$","$$"], ["\\[", "\\]"] ], processEscapes: true, ignoreClass: "tex2jax_ignore|dno" },
+      TeX: { noUndefined: { attributes: { mathcolor: "red", mathbackground: "#FFEEEE", mathsize: "90%" } } },
+      messageStyle: "none"
+    });
+</script>    
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js"></script>
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/default.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/glsl.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/cpp.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/java.min.js"></script>
+<script>hljs.highlightAll();</script>
 
 <div id = "banner">
 </div>
@@ -130,7 +139,7 @@ MathJax = {
 		</p>
 		
 		<p>
-		Now, to compute $L_i(p, \vec{\omega_i})$, we can simply integrate over all possible $\vec{\omega_i}$, which form a hemisphere around $p$ centered
+		Now, to compute $L_o(p, \vec{\omega_i})$, we can simply integrate over all possible $\vec{\omega_i}$, which form a hemisphere around $p$ centered
 		around the surface normal $\vec{n}$. We have just derived the <i>Rendering Equation</i>.  
 		</p>
 		
@@ -560,7 +569,7 @@ MathJax = {
 		To store hit information, I made a struct called <code>HitInfo</code>.
 		</p>
 		
-		<pre><code>
+		<pre><code class="language-glsl">
 struct HitInfo {
 	bool didHit;
 	float dist;
@@ -586,7 +595,7 @@ struct HitInfo {
 		A triangle is defined using 3 points, so my triangle struct just has these 3 points.
 		</p>
 		
-		<pre><code>
+		<pre><code class="language-glsl">
 struct Triangle {
 	vec3 a;
 	vec3 b;
@@ -606,7 +615,7 @@ struct Triangle {
 		the ray has to collide with the triangle on the 'interior' side. 
 		</p>
 		
-		<pre><code>
+		<pre><code class="language-glsl">
 HitInfo rayTriangle(Ray ray, Triangle triangle) {
 	HitInfo ret = createHitInfo();
 	
@@ -682,7 +691,7 @@ HitInfo rayTriangle(Ray ray, Triangle triangle) {
 		A sphere can be defined by a center position, and a radius
 		</p>
 		
-		<pre><code>
+		<pre><code class="language-glsl">
 struct Sphere {
 	vec3 center;
 	float radius;
@@ -695,7 +704,7 @@ struct Sphere {
 		if the ray origin is inside the sphere. 
 		</p>
 		
-		<pre><code>
+		<pre><code class="language-glsl">
 HitInfo raySphere(Ray ray, Sphere sphere) {
 	HitInfo ret = createHitInfo();
 	vec3 sphereCenter = sphere.center.xyz;

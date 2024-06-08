@@ -11,15 +11,24 @@
 <script src = "../../../js/banner/sketch.js"></script>
 <script src = "../../../js/banner/boid.js"></script>	
 
-<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
-<script>
-MathJax = {
-  tex: {
-    inlineMath: [['$', '$'], ['\\(', '\\)']]
-  }
-};
-</script>
-<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      jax: ["input/TeX", "output/HTML-CSS"],
+      extensions: ["tex2jax.js"],
+      "HTML-CSS": { preferredFont: "TeX", availableFonts: ["STIX","TeX"] },
+      tex2jax: { inlineMath: [ ["$", "$"], ["\\(","\\)"] ], displayMath: [ ["$$","$$"], ["\\[", "\\]"] ], processEscapes: true, ignoreClass: "tex2jax_ignore|dno" },
+      TeX: { noUndefined: { attributes: { mathcolor: "red", mathbackground: "#FFEEEE", mathsize: "90%" } } },
+      messageStyle: "none"
+    });
+</script>    
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js"></script>
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/default.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/glsl.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/cpp.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/java.min.js"></script>
+<script>hljs.highlightAll();</script>
 
 <div id = "banner">
 </div>
@@ -115,7 +124,7 @@ MathJax = {
 		behave more like a fluid, as opposed to behaving like a gas, where the target density is near 0.
 		</p>
 		
-		<pre><code>
+		<pre><code class="language-java">
 private float calculatePressure(float density) {
 	float densityError = density - targetDensity;
 	float pressure = densityError * pressureMultiplier;
@@ -130,7 +139,7 @@ private float calculatePressure(float density) {
 		to compute the pressure force. 
 		</p>
 		
-		<pre><code>
+		<pre><code class="language-java">
 private float calculateSharedPressure(float d1, float d2) {
 	float p1 = this.calculatePressure(d1);
 	float p2 = this.calculatePressure(d2);
@@ -144,7 +153,7 @@ private float calculateSharedPressure(float d1, float d2) {
 		particle around it, and sum them up. 
 		</p>
 		
-		<pre><code>
+		<pre><code class="language-java">
 private float densitySmoothingKernelSlope(float dist) {
 	return -3.0f * Math.pow(Math.max(0, smoothingRadius - dist), 2) * waterMass;
 }
@@ -220,7 +229,7 @@ private Vec2 calculatePressureForce(int ind) {
 		the first index where a particle has that hash value, or -1 if no particle has the hash value. 
 		</p>
 		
-		<pre><code>
+		<pre><code class="language-java">
 //example grid hash function
 private int computeHash(int x, int y) {
 	x += 403;
@@ -235,7 +244,7 @@ private int computeHash(int x, int y) {
 		looking at. 
 		</p>
 		
-		<pre><code>
+		<pre><code class="language-java">
 private int[] dx = new int[] {-1, -1, -1, 0, 0, 0, 1, 1, 1};
 private int[] dy = new int[] {-1, 0, 1, -1, 0, 1, -1, 0, 1};
 
@@ -350,7 +359,7 @@ private Vec2 computeDensity(Vec2 pos) {
 		First, comes all the setup stuff, like defining the local work group size, and defining some uniforms to be set externally.
 		</p>
 		
-		<pre><code>
+		<pre><code class="language-glsl">
 #version 430 core
 
 layout (local_size_x = 64, local_size_y = 1, local_size_z = 1) in;
@@ -378,7 +387,7 @@ uniform int LUT_P5;
 		Next, we define some functions that will be helpful when hashing the predicted positions.
 		</p>
 		
-		<pre><code>
+		<pre><code class="language-glsl">
 int computeHash(int x, int y) {
 	x += LUT_P4;
 	y += LUT_P5;
@@ -396,7 +405,7 @@ int computeHash(vec2 pos) {
 		Finally, we slap a main method onto it to actually do the computation. 
 		</p>
 		
-		<pre><code>
+		<pre><code class="language-glsl">
 void main() {
 	int texelCoord = int(gl_GlobalInvocationID.x);
 	vec4 posvel = imageLoad(posvelTexture, texelCoord);
@@ -449,7 +458,7 @@ void main() {
 		Executing the shader is as simple as first setting all the uniforms, and then doing this:
 		</p>
 		
-		<pre><code>
+		<pre><code class="language-java">
 glDispatchCompute(COMPUTE_NR_PARTICLES / 64, 1, 1);
 		</code></pre>
 		
@@ -465,7 +474,7 @@ glDispatchCompute(COMPUTE_NR_PARTICLES / 64, 1, 1);
 		invocation can access the buffer memory before the current invocation is complete. 
 		</p>
 		
-		<pre><code>
+		<pre><code class="langugage-java">
 glMemoryBarrier(GL_SHADER_IMAGE_ACCESS_BARRIER_BIT);
 		</code></pre>
 		

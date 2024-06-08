@@ -10,31 +10,56 @@ body {
 	overflow-x: hidden;
 }
 
+* {
+	font-family: Arial;
+}
+
 h1 {
 	color: #FFFFFF;
-	font-family: Arial;
 }
 
 h2 {
 	color: #000000;
-	font-family: Arial;
 }
 
 h3 {
 	color: #000000;
-	font-family: Arial;
 }
 
 h4 {
 	color: #000000;
-	font-family: Arial;
 }
 
 p {
 	color: #212121;
 	line-height: 1.4;
-	font-family: Arial;
 	font-size: 14px;
+}
+
+table {
+	position: relative;
+	display: inline-block;
+	margin: auto;
+	
+	border: 1px solid rgb(200,200,200);
+	border-collapse: collapse;
+}
+
+td, th {
+	font-size: 14px;
+  	border: 1px solid rgb(210,210,210);
+  	padding: 5px 10px;
+}
+
+
+
+th {
+	background-color: rgb(240, 240, 240);
+	font-style: bold;
+}
+
+td {
+  	font-style: italic;
 }
 
 pre {
@@ -44,12 +69,22 @@ pre {
   	margin-bottom: 0px;
 }
 
-pre code {
+html pre code {
   	background-color: #eee;
   	border: 1px solid #000;
   	display: block;
   	padding-left: 15px;
-  
+  	font-family: consolas;
+  	font-size: 12px;
+}
+
+html pre code.hljs {
+	padding-top: 0px;
+	padding-bottom: 0px;
+}
+
+pre code span {
+  	font-family: consolas;
 }
 
 li {
@@ -64,6 +99,11 @@ a {
 	font-family: Arial;
 	text-decoration: none;
 	font-weight: bold;
+}
+
+figure {
+	margin: 0px;
+	padding: 5px;
 }
 
 figcaption {
@@ -106,10 +146,10 @@ img.pixelart{
 	position: -webkit-sticky;
 	position: sticky;
 	top: 5vh;
-	left: 17vh;
+	left: 5vh;
 	padding: 5px;
 	line-height: 150%;
-	border: 1px dashed black;
+	border: 0px black;
 	float:left;
 	margin-top: 2vh;
 	font-size: 17px;
@@ -168,11 +208,6 @@ a:hover {
 	display: block;
 	position: relative;
 	display: inline-block;	
-}
-
-figure {
-	margin: 0px;
-	padding: 5px;
 }
 
 .nav_links {

@@ -11,6 +11,12 @@
 <script src = "../../../js/banner/sketch.js"></script>
 <script src = "../../../js/banner/boid.js"></script>	
 
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/default.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/glsl.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/cpp.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/java.min.js"></script>
+<script>hljs.highlightAll();</script>
 
 <div id = "banner">
 </div>
@@ -106,7 +112,7 @@
 		<p>Instead of making another sphere to render the ocean, I decided that I would render it as a post processing
 		effect. First, we had to make a ray-sphere intersection algorithm. </p>
 		
-		<pre><code>
+		<pre><code class="language-glsl">
 //returns the length of intersection between a ray and a sphere
 float raySphereLength(vec3 rayOrigin, vec3 rayDir, vec3 spherePos, float sphereRadius) {
 	vec3 rayToSphere = spherePos - rayOrigin;
@@ -207,7 +213,7 @@ float raySphereLength(vec3 rayOrigin, vec3 rayDir, vec3 spherePos, float sphereR
 		as the integral of the atmospheric density along the path. Since calculating the exact value of this integral is 
 		relatively difficult, we can just calculate it as a reimann sum using a few sample points along the path. </p>
 		
-		<pre><code>
+		<pre><code class="language-glsl">
 const int numOpticalDepthPoints = 10;
 
 float transmittance(vec3 rayOrigin, vec3 rayDir, float rayLength) {
@@ -226,7 +232,7 @@ float transmittance(vec3 rayOrigin, vec3 rayDir, float rayLength) {
 		<p>Computing the atmospheric density at a given point is simple, you just need to consider that atmospheric
 		density starts at 1 on the surface, and decays exponentially when you gain altitude.</p>
 		
-		<pre><code>
+		<pre><code class="language-glsl">
 float densityAtPoint(vec3 densitySamplePoint) {
 	float heightAboveSurface = length(densitySamplePoint - planet_pos) - planet_radius;
 	float height01 = heightAboveSurface / (atmosphere_radius - planet_radius);
@@ -240,7 +246,7 @@ float densityAtPoint(vec3 densitySamplePoint) {
 		away along the viewRay. We can factor this in by multiplying by the viewRay's transmittance. The full function to
 		calculate the amount of light recieved by the camera is below:</p>
 		
-		<pre><code>
+		<pre><code class="language-glsl">
 const int numInScatteringPoints = 10;
 			
 float calculateLight(vec3 rayOrigin, vec3 rayDir, float rayLength) {

@@ -11,15 +11,24 @@
 <script src = "../../../js/banner/sketch.js"></script>
 <script src = "../../../js/banner/boid.js"></script>	
 
-<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
-<script>
-MathJax = {
-  tex: {
-    inlineMath: [['$', '$'], ['\\(', '\\)']]
-  }
-};
-</script>
-<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      jax: ["input/TeX", "output/HTML-CSS"],
+      extensions: ["tex2jax.js"],
+      "HTML-CSS": { preferredFont: "TeX", availableFonts: ["STIX","TeX"] },
+      tex2jax: { inlineMath: [ ["$", "$"], ["\\(","\\)"] ], displayMath: [ ["$$","$$"], ["\\[", "\\]"] ], processEscapes: true, ignoreClass: "tex2jax_ignore|dno" },
+      TeX: { noUndefined: { attributes: { mathcolor: "red", mathbackground: "#FFEEEE", mathsize: "90%" } } },
+      messageStyle: "none"
+    });
+</script>    
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js"></script>
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/default.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/glsl.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/cpp.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/java.min.js"></script>
+<script>hljs.highlightAll();</script>
 
 <div id = "banner">
 </div>
@@ -82,7 +91,7 @@ MathJax = {
 		some threshold, the water droplet will be terminated.</p>
 		
 		<!-- Show erosion code snippet -->
-		<pre><code>
+		<pre><code class="language-java">
 private static void performSnowballErosion(float[][][] heightmap) {
 	float epsilon = 0.01f;
 	
@@ -164,7 +173,7 @@ private static void performSnowballErosion(float[][][] heightmap) {
 		and averaged the normals of those 4 triangles.</p>
 		
 		<!-- Terrain with normal lines -->
-		<pre><code>
+		<pre><code class="language-java">
 //create 4 triangles and average to sample normal
 private static Vec3 sampleNormal(float[][][] heightmap, float x, float z) {
 	int r = MathUtils.clamp(1, TERRAIN_RESOLUTION - 2, Math.round(x));
@@ -208,7 +217,7 @@ private static Vec3 sampleNormal(float[][][] heightmap, float x, float z) {
 		an erosion coefficient should be set based on the material that we are eroding.</p>
 		
 		<!-- 2 Layer erosion code snippet -->
-		<pre><code>
+		<pre><code class="language-java">
 //first, calculate erosion amt
 float sedimentErosion = (1 - surfaceNormal.y) * sedimentErosionRate;
 float solidErosion = 0;

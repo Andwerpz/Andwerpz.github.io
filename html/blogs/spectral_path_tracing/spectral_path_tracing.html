@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="ISO-8859-1">
+<title>Portfolio - Spectral Path Tracing</title>
+<link rel="stylesheet" href="../../../styles/styles.css">
+</head>
+
+<script src = "https://cdn.jsdelivr.net/npm/p5@1.2.0/lib/p5.js"></script>
+<script src="http://cdnjs.cloudflare.com/ajax/libs/p5.js/0.5.6/addons/p5.dom.js"></script>
+<script src = "../../../js/banner/sketch.js"></script>
+<script src = "../../../js/banner/boid.js"></script>	
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      jax: ["input/TeX", "output/HTML-CSS"],
+      extensions: ["tex2jax.js"],
+      "HTML-CSS": { preferredFont: "TeX", availableFonts: ["STIX","TeX"] },
+      tex2jax: { inlineMath: [ ["$", "$"], ["\\(","\\)"] ], displayMath: [ ["$$","$$"], ["\\[", "\\]"] ], processEscapes: true, ignoreClass: "tex2jax_ignore|dno" },
+      TeX: { noUndefined: { attributes: { mathcolor: "red", mathbackground: "#FFEEEE", mathsize: "90%" } } },
+      messageStyle: "none"
+    });
+</script>    
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js"></script>
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/default.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/glsl.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/cpp.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/java.min.js"></script>
+<script>hljs.highlightAll();</script>
+
+<div id = "banner">
+</div>
+
+<div class = "header">
+	<div class = "header-text">
+		<h1>Spectral Path Tracing</h1>
+	</div>
+</div>
+	
+<div class = "nav_links">
+	<div class = "nav_link">
+		<a href = "../../../small_projects.html">Small Projects</a>
+	</div>
+	<div class = "nav_link">
+		<a href = "../../../index.html">Main Page</a>
+	</div>
+	<div class = "nav_link">
+		<a href = "../../../about_me.html">About Me</a>
+	</div>
+</div>
+
+<div class = "sidebar">
+</div>
+
+<div class = "page">
+	<div class = "blog">
+		<p>
+		It's been a while, but here is the second installment in my development of a path tracing renderer. Last time, I assumed that I could represent
+		light using 3 values, RGB, which quantified the intensity of red, green, and blue light in the ray. While serviceable at the time, 
+		this representation of light reveals a fundamental misunderstanding of how light and color are related. It also makes us unable to render
+		some more interesting phenomenon such as dispersion which is dependent on wavelength. 
+		</p>
+		
+		<p>
+		Here, I switch over to a spectral representation of light in order to create more physically accurate renders. 
+		</p>
+		
+		<!-- nice picture here -->
+		<figure>
+			<img src="dispersion_monkey.png" width="75%">
+		</figure>
+		
+		<h2 id = "color">Color</h2>
+		<p>
+		Visible light is a physical phenomenon. It is electromagnetic radiation that is within the narrow band of wavelengths that can be percieved by 
+		the human eye, generally around 400nm to 700nm. Color, unlike light, is a purely sensory phenomenon; It only exists as sensations within 
+		our brains. So the first problem is: given some incoming light spectra, how do we turn it into an RGB color that we can display onto the screen?
+		</p>
+		
+		<h3>XYZ Color</h3>
+		<p>
+		The human eye has 3 types of 'cone' cells that sense light, each having different peaks in spectral sensitivity. The CIE XYZ color matching curves each correspond to 
+		one of these types of cone cells, and represents that cone cells sensitivity distribution towards light as a function of wavelength.
+		</p>
+		
+		<!-- CIE XYZ color matching curves -->
+		<figure>
+			<img src="cie_xyz.svg" width="60%">
+			<figcaption>Image from <a href="https://www.pbr-book.org">pbr-book.org</a>, data collected by the International Commission on Illumination (CIE)</figcaption>
+		</figure>
+		
+		<p>
+		If we have some spectra $S(\lambda)$, we can compute the activation of each of our three types of cone cells by just taking the integral of the product of $S(\lambda)$
+		and the respective color matching curve:
+		</p>
+		
+		<p>$$x = \frac{1}{\int{}{}Y(\lambda)d\lambda}\int{}{}S(\lambda)X(\lambda)d\lambda$$</p>
+		<p>$$y = \frac{1}{\int{}{}Y(\lambda)d\lambda}\int{}{}S(\lambda)Y(\lambda)d\lambda$$</p>
+		<p>$$z = \frac{1}{\int{}{}Y(\lambda)d\lambda}\int{}{}S(\lambda)Z(\lambda)d\lambda$$</p>
+		
+		<p>
+		These color matching curves are available for download from the CIE website in csv format. 
+		<a href="https://cie.co.at/datatable/cie-1931-colour-matching-functions-2-degree-observer">Here</a> is the link for your convenience.
+		</p>
+		
+		<h3>sRGB Color</h3>
+		<p>
+		Once we have our color in the XYZ color space, converting it into the sRGB color space is as easy as multiplying by a matrix. I'll include the XYZ to sRGB matrix below, 
+		but if you want to convert to a different color space, or are interested in the derivation, 
+		<a href="http://www.brucelindbloom.com/index.html?Eqn_RGB_XYZ_Matrix.html">this website</a> has got you covered. 
+		</p>
+		
+		<p>$$
+\begin{bmatrix}
+r\\ 
+g\\ 
+b
+\end{bmatrix}
+
+=
+
+\begin{bmatrix}
+3.2404542 & -1.5371385 & -0.4985314 \\ 
+-0.9692660 & 1.8760108 & 0.0415560 \\ 
+0.0556434 & -0.2040259 & 1.0572252
+\end{bmatrix}
+
+\begin{bmatrix} 
+x\\
+y\\
+z
+\end{bmatrix}
+		$$</p>
+		
+		<h2>Reflectance Spectrum from sRGB</h2>
+		<p>
+		Since most of our materials and textures colors are defined in the sRGB color space, and we need reflectance and emission spectra for our renderer, how exactly do 
+		we turn an sRGB triplet into a spectrum for our renderer to handle? Note that there can be many solutions to this problem, as two different spectra (called metamers) 
+		can look identical to the human eye. 
+		</p>
+		
+		<p>
+		What we do is we look for someone else who already did the hard work. <a href="http://scottburns.us/fast-rgb-to-spectrum-conversion-for-reflectances/">This website</a>
+		proposes that to represent any sRGB triplet, we only need to take some weighted sum of spectra representing pure red, green, and blue sRGB colors. But since adding
+		them directly might make the resulting spectra go over 1 in some places, he does some math magic to smooth and balance them out. It's also extremely fast; sampling
+		the spectrum at a particular wavelength just involves adding 3 numbers. The downside is that due to the lack of degrees of freedom, this method may not be able to 
+		exactly match any sRGB spectra, as we are just taking a weighted sum.
+		</p>
+		
+		<figure>
+			<img src="rgbc_1nm.png" width="50%">
+			<figcaption>From <a href="http://scottburns.us">http://scottburns.us</a>. These three curves are the spectra that match the pure sRGB colors 
+			red, green, and blue.</figcaption>
+		</figure>
+		
+		<p>
+		If your sRGB color is already color corrected, then you need to convert it back into linear RGB before you can take the weighted sum. To do so, you can use the below
+		componentwise conversion function. 
+		</p>
+		
+		<pre><code class="language-java">
+private static float sRGBToLinear(float a) {
+	if (a < 0.04045) {
+		return a / 12.92f;
+	}
+	return (float) Math.pow((a + 0.055) / 1.055, 2.4);
+}
+		</code></pre>
+		
+		<p>
+		To see exactly how good this solution is, I created a little test. On the left side, is the sRGB triplet. Then, I converted the sRGB triplet into a spectrum
+		using the above method, and then converted it back to sRGB by first using the CIE XYZ color matching spectra, and then using the XYZ to sRGB conversion matrix.
+		</p>
+		
+<style>
+.zoom {
+  transition: transform .2s; /* Animation */
+}
+
+.zoom:hover {
+  transform: scale(2.6); /* (150% zoom - Note: if the zoom is too large, it will go outside of the viewport) */
+  z-index:555555 !important;
+}
+</style>
+		
+		<!-- color test window without xz scaling -->
+		<figure>
+			<img class="zoom" src="conversion_test_00.png" width="30%">
+			<img class="zoom" src="conversion_test_10.png" width="30%">
+			<img class="zoom" src="conversion_test_20.png" width="30%">
+			<figcaption>The line is the generated reflectance spectrum from 360nm to 830nm</figcaption>
+		</figure>
+		
+		<p>
+		Kinda worryingly, the two colors didn't match up at first, but after applying a scaling factor to X and Z to fix the whitepoint before converting to sRGB, they matched 
+		up pretty well. I associate the remaining difference to the sRGB to spectra conversion. 
+		</p>
+		
+		<!-- color test window with xz scaling -->
+		<figure>
+			<img class="zoom" src="conversion_test_01.png" width="30%">
+			<img class="zoom" src="conversion_test_11.png" width="30%">
+			<img class="zoom" src="conversion_test_21.png" width="30%">
+			<figcaption>Much better. Also, I forgot to move my mouse on one of them oops</figcaption>
+		</figure>
+		
+		<p>
+		The scaling factor I applied is $\frac{0.9505}{1.000081}$ to $x$, and $\frac{1.0888}{1.0003315}$ to $z$. If you know why I had to do this, please tell me &#128522.  
+		</p>
+		
+		<h2>Dispersion</h2>
+		<p>
+		Dispersion is the measure of how much the IOR (Index of Refraction) changes as a function of wavelength. It can be approximated in the visible
+		light range using <a href="https://en.wikipedia.org/wiki/Cauchy%27s_equation">Cauchy's Equation</a>:
+		</p>
+		
+		<p>$$n(\lambda) = A + \frac{B}{\lambda^2} + \frac{C}{\lambda^4} + \cdots$$</p>
+		
+		<p>
+		For our purpose, it's sufficient to only use the first 2 terms. Note that $\lambda$, by convention, is in units of micrometers. 
+		</p>
+		
+		<p>$$n(\lambda) = A + \frac{B}{\lambda^2}$$</p>
+		
+		<p>
+		To find the coefficients $A$ and $B$, you can measure them yourself (have fun), or you can see if someone else did the hard work for you and look them up.
+		I've found that for common materials, it's pretty easy to find the coefficients directly, but for more uncommon or specific materials, you'll probably need to 
+		derive them from the Abbe number for that material. 
+		<a href="https://wiki.luxcorerender.org/Glass_Material_IOR_and_Dispersion">This website</a> has a pretty good guide on how to 
+		derive the Cauchy coefficients from Abbe numbers, and for your convenience, <a href="https://refractiveindex.info/">here</a> is the database of material info they 
+		link. 
+		</p>
+		
+		<h2>Putting it Together</h2>
+		<p>
+		Now that we have all the pieces of the puzzle, it's actually pretty simple to modify our old RGB code to support spectral rendering, but first we need to redefine our goal. 
+		Instead of directly computing an RGB value for each direction (or pixel), we instead need to first compute the incoming light spectra $S(\lambda)$, which we then can convert 
+		into an RGB value to render onto the screen. 
+		</p>
+		
+		<p>
+		If you remember back to the previous time, $L_o(p, \vec{\omega})$ is the amount of light outgoing from point $p$ in direction $\vec{\omega}$. Since we are doing spectral
+		rendering, $L_o(p, \vec{\omega})$ is now a spectrum, so it should instead be $L_o(p, \vec{\omega}, \lambda)$. We can then rewrite our rendering equation with this in mind:
+		</p>
+		
+		<p>$$L_o(p, \vec{\omega_o}, \lambda) = L_e(p, \lambda) + \int L_i(p, \vec{\omega_i}, \lambda)B(p, \vec{\omega_o}, \vec{\omega_i}, \lambda)(\vec{n} \cdot \vec{\omega_i}) d\vec{\omega_i}$$</p>
+		
+		<p>
+		Probably the scariest part in here is that the BSDF is now also a function of the wavelength, but if you are only going to account for dispersion, the BSDF remains the same
+		for everything else except for computing the wavelength dependent IOR at material boundaries. Something that might be worth looking into is how to account for iridescence, 
+		but that's for another time
+		</p>
+		
+		<p>
+		Once we have our spectrum, we first need to compute the XYZ color coordinates. Since that needs another integral, we need to do Monte Carlo sampling like so:
+		</p>
+		
+		<p>$$x = \frac{1}{\int{}{}Y(\lambda)d\lambda}E[\frac{b-a}{n}\sum_{i=1}^{n}L_o(p, \vec{\omega_o}, \lambda_i)X(\lambda_i)]$$</p>
+		<p>$$y = \frac{1}{\int{}{}Y(\lambda)d\lambda}E[\frac{b-a}{n}\sum_{i=1}^{n}L_o(p, \vec{\omega_o}, \lambda_i)Y(\lambda_i)]$$</p>
+		<p>$$z = \frac{1}{\int{}{}Y(\lambda)d\lambda}E[\frac{b-a}{n}\sum_{i=1}^{n}L_o(p, \vec{\omega_o}, \lambda_i)Z(\lambda_i)]$$</p>
+		
+		<p>
+		$a$ and $b$ in this case are the limits on the spectrum range in nanometers, probably $a = 360$ and $b = 830$, and $\lambda_i$ is some uniform random variable in the range
+		$[a, b]$. 
+		</p>
+		
+		<p>
+		After we've computed our XYZ color coordinates, we can then apply the matrix to convert it into RGB, color correct it, and render like normal. 
+		</p>
+		
+		<h2 id = "further_improvements">Further Improvements</h2>
+		<p>
+		For next time, I want to look into optimizing my renderer. There are two main ways I can do this:
+		</p>
+		
+		<p><b>Increase Sampling Speed</b></p>
+		<ul>
+			<li>Rewrite ray-primitive intersections to use less if statements. This one I should probably do first.</li>
+			<li>Implement <i>KD Trees</i>. Currently, I'm using Bounding Volume Hierarchies, but according to many papers and people online, KD Trees are 
+			significantly better in scenes with more primitives.</li>
+		</ul>
+		
+		<p><b>Increase Convergence Rate</b></p>
+		<ul>
+			<li>Use <i>Bidirectional Path Tracing</i>. Currently, I'm tracing rays starting from the camera, and bouncing them around until they hit a light. Bidirectional
+			path tracing starts a ray from the camera, and from a light source, and does next event estimation to converge faster.</li>
+			<li><i>Metropolis Light Transport</i>. Instead of randomly trying paths hoping to hit a light, record what paths work and look for new paths close to those.</li>
+		</ul>
+	</div>
+</div>
+
+</html>
