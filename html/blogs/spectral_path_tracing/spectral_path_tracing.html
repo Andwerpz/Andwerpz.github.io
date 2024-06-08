@@ -52,6 +52,11 @@
 </div>
 
 <div class = "sidebar">
+	<a href = "#color">Color</a> <br>
+	<a href = "#reflectance_from_srgb">Reflectance Spectrum from sRGB</a> <br>
+	<a href = "#dispersion">Dispersion</a> <br>
+	<a href = "#putting_it_together">Putting it Together</a> <br>
+	<a href = "#further_improvements">Further Improvements</a> <br>
 </div>
 
 <div class = "page">
@@ -134,7 +139,7 @@ z
 \end{bmatrix}
 		$$</p>
 		
-		<h2>Reflectance Spectrum from sRGB</h2>
+		<h2 id="reflectance_from_srgb">Reflectance Spectrum from sRGB</h2>
 		<p>
 		Since most of our materials and textures colors are defined in the sRGB color space, and we need reflectance and emission spectra for our renderer, how exactly do 
 		we turn an sRGB triplet into a spectrum for our renderer to handle? Note that there can be many solutions to this problem, as two different spectra (called metamers) 
@@ -210,7 +215,7 @@ private static float sRGBToLinear(float a) {
 		The scaling factor I applied is $\frac{0.9505}{1.000081}$ to $x$, and $\frac{1.0888}{1.0003315}$ to $z$. If you know why I had to do this, please tell me &#128522.  
 		</p>
 		
-		<h2>Dispersion</h2>
+		<h2 id="dispersion">Dispersion</h2>
 		<p>
 		Dispersion is the measure of how much the IOR (Index of Refraction) changes as a function of wavelength. It can be approximated in the visible
 		light range using <a href="https://en.wikipedia.org/wiki/Cauchy%27s_equation">Cauchy's Equation</a>:
@@ -233,7 +238,7 @@ private static float sRGBToLinear(float a) {
 		link. 
 		</p>
 		
-		<h2>Putting it Together</h2>
+		<h2 id="putting_it_together">Putting it Together</h2>
 		<p>
 		Now that we have all the pieces of the puzzle, it's actually pretty simple to modify our old RGB code to support spectral rendering, but first we need to redefine our goal. 
 		Instead of directly computing an RGB value for each direction (or pixel), we instead need to first compute the incoming light spectra $S(\lambda)$, which we then can convert 
