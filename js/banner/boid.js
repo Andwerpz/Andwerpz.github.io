@@ -6,7 +6,7 @@ class Boid {
 		this.velocity.mult(random(4));
 		this.acceleration = createVector();
 		this.perceptionRadius = pr;
-		this.maxForce = 0.2;
+		this.maxForce = 0.15;
 		this.maxSpeed = .7;
 	}
 	
@@ -14,22 +14,13 @@ class Boid {
 		strokeWeight(8);
 		stroke(255);
 		point(this.position.x, this.position.y);
+        if(this.position.x < this.perceptionRadius) point(this.position.x + width, this.position.y);
+        if(width - this.position.x < this.perceptionRadius) point(this.position.x - width, this.position.y);
+        if(this.position.y < this.perceptionRadius) point(this.position.x, this.position.y + height);
+        if(height - this.position.y < this.perceptionRadius) point(this.position.x, this.position.y - height);
 	}
 	
 	tick() {
-	
-		/*let bucketXLength = bucket.length;
-		let bucketYLength = bucket[0].length;
-	
-		let bucketX = (bucket.length + parseInt(Math.min(this.position.x / this.perceptionRadius, (width / this.perceptionRadius) - 1))) % bucketXLength;
-		let bucketY = (bucket[0].length + parseInt(Math.min(this.position.y / this.perceptionRadius, (height / this.perceptionRadius) - 1))) % bucketYLength;
-		for(let i = 0; i < bucket[bucketX][bucketY].length; i++){
-			if(bucket[bucketX][bucketY][i] == this){
-				//print("REMOVE");
-				bucket[bucketX][bucketY].splice(i, 1);
-				break;
-			}
-		}*/
 		this.position.add(this.velocity);
 		this.velocity.add(this.acceleration);
 		this.velocity.limit(this.maxSpeed);
@@ -46,10 +37,6 @@ class Boid {
 		if(this.position.y < 0){
 			this.position.y += height;
 		}
-		/*bucketX = (bucket.length + parseInt(Math.min(this.position.x / this.perceptionRadius, (width / this.perceptionRadius) - 1))) % bucketXLength;
-		bucketY = (bucket[0].length + parseInt(Math.min(this.position.y / this.perceptionRadius, (height / this.perceptionRadius) - 1))) % bucketYLength;
-		bucket[bucketX][bucketY].push(this);*/
-		//print("ADD");
 	}
 	
 	flock(bucket){
@@ -61,31 +48,24 @@ class Boid {
 		let avgPos = createVector();
 		let avgVel = createVector();
 		let count = 0;
-		let bucketX = bucket.length + parseInt(Math.min(this.position.x / this.perceptionRadius, (width / this.perceptionRadius) - 1));
-		let bucketY = bucket[0].length + parseInt(Math.min(this.position.y / this.perceptionRadius, (height / this.perceptionRadius) - 1));
-		//let output = "";
-		for(let i = bucketX - 1; i <= bucketX + 1; i++){
-			for(let j = bucketY - 1; j <= bucketY + 1; j++){
-			//output += (i % bucketXLength) + " " + (j % bucketYLength) + ", ";
-				for(let test of bucket[i % bucketXLength][j % bucketYLength]){
-					
+		let bucketX = parseInt(Math.min(this.position.x / this.perceptionRadius, (width / this.perceptionRadius) - 1));
+		let bucketY = parseInt(Math.min(this.position.y / this.perceptionRadius, (height / this.perceptionRadius) - 1));
+        let minBX = bucketX - 2;
+        let maxBX = bucketX + 2;
+        let minBY = bucketY - 2;
+        let maxBY = bucketY + 2;
+        // if(bucketX == 0) minBX -= 1;
+        // if(bucketX == bucketXLength - 1) maxBX += 1;
+        // if(bucketY == 0) minBY -= 1;
+        // if(bucketY == bucketYLength - 1) maxBY += 1;
+		for(let i = minBX; i <= maxBX; i++){
+			for(let j = minBY; j <= maxBY; j++){
+				for(let test of bucket[(i + bucketXLength) % bucketXLength][(j + bucketYLength) % bucketYLength]){
 					let b = createVector(test.position.x, test.position.y);
-					/*if(dist(this.position.x, this.position.y, b.x + width, b.y) < dist(this.position.x, this.position.y, b.x, b.y)){
-						//print("PLUS WIDTH");
-						b.x += width;
-					}
-					else if(dist(this.position.x, this.position.y, b.x - width, b.y) < dist(this.position.x, this.position.y, b.x, b.y)){
-						//print("MINUS WIDTH");
-						b.x -= width;
-					}
-					if(dist(this.position.x, this.position.y, b.x, b.y + height) < dist(this.position.x, this.position.y, b.x, b.y)){
-						//print("PLUS HEIGHT");
-						b.y += height;
-					}
-					else if(dist(this.position.x, this.position.y, b.x, b.y - height) < dist(this.position.x, this.position.y, b.x, b.y)){
-						//print("MINUS HEIGHT");
-						b.y -= height;
-					}*/
+                    if(i >= bucketXLength) b.x += width;
+                    if(i < 0) b.x -= width;
+                    if(j >= bucketYLength) b.y += height;
+                    if(j < 0) b.y -= height;
 					let d = dist(this.position.x, this.position.y, b.x, b.y);
 					if(test != this && d <= this.perceptionRadius){
 						count ++;
@@ -100,19 +80,16 @@ class Boid {
 						let diff = p5.Vector.sub(this.position, b);
 						diff.div(d * d);
 						avgDiff.add(diff);
-						
 					}
-					if(d <= this.perceptionRadius + 10){
-						strokeWeight(Math.min((6 * this.perceptionRadius) / (d * d), 1));
-						line(this.position.x, this.position.y, b.x, b.y);
-					}
+                    if(d <= this.perceptionRadius) {
+                        strokeWeight(1 - (d / this.perceptionRadius));
+                        line(this.position.x, this.position.y, b.x, b.y);
+                    }
 				}
 			}
 		}
-		//print(output);
 		
 		if(count != 0){
-		
 			//alignment
 			avgVel.div(count);
 			avgVel.setMag(this.maxSpeed);
@@ -134,12 +111,7 @@ class Boid {
 		}
 		
 		this.acceleration.set(0, 0);
-		/*
-		let alignment = this.align(boids);
-		let cohesion = this.cohesion(boids);
-		let separation = this.separation(boids);
-		*/
-		
+
 		avgVel.mult(1);
 		avgPos.mult(1);
 		avgDiff.mult(1.2);
@@ -147,6 +119,5 @@ class Boid {
 		this.acceleration.add(avgVel);
 		this.acceleration.add(avgPos);
 		this.acceleration.add(avgDiff);
-
 	}
 }

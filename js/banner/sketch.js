@@ -1,11 +1,8 @@
 
-
-
 const boids = [];
 bucket = [];
 
 const perceptionRadius = 50;
-
 
 function setup(){
 	cnv = createCanvas(windowWidth, 240);
@@ -21,8 +18,6 @@ function setup(){
 	for(let i = 0; i < 100; i++){
 		let x = random(width);
 		let y = random(height);
-		//bucket[0][0].push(new Boid(x, y, perceptionRadius));
-		//print(parseInt(Math.min(x / perceptionRadius, (width / perceptionRadius) - 1)) + " " + parseInt(Math.min(y / perceptionRadius, (height / perceptionRadius) - 1)));
 		bucket[parseInt(Math.min(x / perceptionRadius, (width / perceptionRadius) - 1))][parseInt(Math.min(y / perceptionRadius, (height / perceptionRadius) - 1))].push(new Boid(x, y, perceptionRadius));
 		boids.push(new Boid(x, y, perceptionRadius));
 	}
@@ -42,7 +37,6 @@ function draw(){
 	}
 	
 	//let count = 0;
-	
 	for(let i = 0; i < bucket.length; i++){
 		for(let j = 0; j < bucket[i].length; j++){	
 			for(let boid of bucket[i][j]){
@@ -59,13 +53,6 @@ function draw(){
 			}
 		}
 	}
-	//print(count);
-	//textSize(60);
-	//stroke(30);
-	//textAlign(CENTER);
-	//textFont('Georgia');
-	//fill(255);
-	//text('The Website Project', windowWidth / 2, 130);
 	bucket = newBucket;
 
 }
