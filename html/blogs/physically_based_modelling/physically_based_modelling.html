@@ -364,7 +364,9 @@ b.pos.addi(poscorr_b);
 		
 		<!-- show image of spheres -->
 		<figure>
-			<img src="balls_no_texture.png" width="60%">
+			<video autoplay muted loop width="60%">
+				<source src="balls1.mp4" type="video/mp4">
+			</video>
 		</figure>
 		
 		<p>
@@ -374,7 +376,9 @@ b.pos.addi(poscorr_b);
 		
 		<!-- show image of textured spheres -->
 		<figure>
-			<img src="balls_texture.png" width="60%">
+			<video autoplay muted loop width="60%">
+				<source src="balls2.mp4" type="video/mp4">
+			</video>
 			<figcaption>Looks much better now</figcaption>
 		</figure>
 		
@@ -410,7 +414,7 @@ b.pos.addi(poscorr_b);
 		within a limited range, or 'smoothing radius', which enables quite a few optimizations. 
 		</p>
 		
-		<h4>Spatial Hashing</h4>
+		<h3>Spatial Hashing</h3>
 		<p>
 		Since each particle only interacts with other particles in a limited radius, if we can somehow only loop
 		through the particles that are close to the current particle, then we can speed up the simulation significantly.
@@ -489,9 +493,6 @@ Also, B'[i] = max(A[n - 1 - i], B[i]). The first is decreasing, the second is in
 ok, then how is this invariant maintained via the red blocks?
 Let the original block X[0] ... X[2n] be bitonic. There is an index m such that
 X[0] <= X[1] <= ... <= X[m] >= X[m + 1] >= ... >= X[2n]
-
-
-
 		 -->
 		
 		<p>
@@ -656,7 +657,9 @@ Particle getParticle(int ind, int local_particle_start) {
 		
 		<!-- show image of sph particles -->
 		<figure>
-			<img src="sph_particles.png" width="80%">
+			<video autoplay muted loop width="80%">
+				<source src="sph1.mp4" type="video/mp4">
+			</video>
 		</figure>
 		
 		<p>
@@ -666,7 +669,9 @@ Particle getParticle(int ind, int local_particle_start) {
 		
 		<!-- show image of sph nice render -->
 		<figure>
-			<img src="sph_render.png" width="80%">
+			<video autoplay muted loop width="80%">
+				<source src="sph2.mp4" type="video/mp4">
+			</video>
 		</figure>
 		
 		<h2 id="xpbd">XPBD</h2>
@@ -757,31 +762,545 @@ private void RK4Step(float dt) {
 		In both euler integration and RK4 we maintain the position and velocity and gather acceleration from each timestep
 		to compute the next position and velocity. PBD is an integration approach that omits velocity and instead directly
 		works on the positions. This gives it a massive advantage in terms of stability and performance over higher
-		order integration methods like RK4 while sacrificing accuracy. In other words, perfect for a game physics engine. 
+		order integration methods like RK4 while sacrificing accuracy. In other words, PBD is perfect for a game physics engine. 
 		</p>
 		
 		<p>
-		Lets look at how we would enforce a spring constraint in PBD vs. RK4. 
+		In PBD bodies and particles interact with each other via constraints. A constraint $C$ is real valued function that is 
+		satisfied when $C(x_1, \cdots, x_n) = 0$. For example, we can have a distance constraint between two points: 
+		$$C(p_1, p_2) = |p_1 - p_2| - d$$
+		which means that for $C(p_1, p_2)$ to be satisfied, $p_1$ and $p_2$ have to be exactly $d$ units apart. 
+		Every timestep, the solver will try to solve each constraint independently. To solve an arbitrary constraint, we first
+		compute $\lambda$ for all participating particles in the constraint:
+		$$\lambda = \frac{-C}{m_1 |\nabla C_1|^2 + \cdots + m_n |\nabla C_n|^2}$$
+		where $\nabla C_i$ is the gradient of the constraint function with respect to particle $i$, or in other words the direction
+		that particle $i$ should move to increase $C$ the fastest. Then, the correction of particle $i$ is 
+		$$\lambda m_i \nabla C_i$$
+		The solver will go through each constraint, updating the particle positions immediately after solving each constraint, so
+		subsequent constraints will see the updated positions of the particles. After several iterations of the solver, it will 
+		eventually converge to a solution. 
+		</p>
+		
+		<p>
+		The cool part about PBD is that we're not restricted on defining constraints between only two points, we can actually 
+		define one constraint on as many points as we want, as long as we can compute $\nabla C$. One useful example of this 
+		are volume constraints. Usually with spring systems, we would have to define many cross springs to keep a structure
+		from collapsing inwards from itself, but using PBD we can first tetrahedralize our structure then define a volume
+		constraint on every tetrahedron. We also get volume conservation for free!
+		</p>
+		
+		<h3>XPBD</h3>
+		<p>
+		One issue you may have noticed about PBD is that the 'stiffness' of all the constraints in the system isn't really 
+		controllable. You can make the system arbitrarily stiff by increasing the number of solver iterations per timestep, or
+		decreasing the timestep itself, but there is no per-constraint control for stiffness. The key improvement that XPBD
+		(<i>e<b>X</b>tended <b>P</b>osition <b>B</b>ased <b>D</b>ynamics</i>)
+		brings is to try to decouple stiffness from the timestep or number of iterations by introducing 'compliance' to constraints. 
+		So the new formulation for $\lambda$ is
+		$$\lambda = \frac{-C}{m_1 |\nabla C_1|^2 + \cdots + m_n |\nabla C_n|^2 + \frac{\alpha}{h^2}}$$
+		where $\alpha$ is the 'compliance' of the constraint and $h$ is the timestep. Observe that if $\alpha = 0$, then the 
+		constraint will become infinitely stiff, or identical to PBD. 
 		</p>
 		
 		<h3>Results</h3>
+		<p>
+		We can first compare the results of euler integration and RK4 to see how a higher order integration method is more stable.  
+		</p>
+		
+		<!-- show comparison videos of euler vs RK4 on ball mesh -->
+		<figure>
+			<video autoplay muted loop width="80%">
+				<source src="xpbd1.mp4" type="video/mp4">
+			</video>
+		</figure>
+		
+		<p>
+		Next, lets compare RK4 and XPBD on a more complicated mesh. I took the stanford bunny and tetrahedralized it using my 
+		own tetrahedralization algorithm. It's good enough for this mesh, but it's really bad on low poly meshes.
+		</p>
+		
+		<!-- show comparison videos of RK4 vs XPBD on bunny mesh -->
+		<figure>
+			<video autoplay muted loop width="80%">
+				<source src="xpbd2.mp4" type="video/mp4">
+			</video>
+		</figure>
+		
+		<p>
+		Finally, I implemented a cool rendering technique from <a href="https://www.youtube.com/watch?v=Noo5sfGGWe0&t=83s">this video</a>
+		where instead of simulating physics directly on a high resolution mesh, we simulate it on a decimated mesh and use the low
+		poly simulated mesh as an animation skeleton for the high resolution one. 
+		</p>
+		
+		<!-- show XPBD dragon mesh -->
+		<figure>
+			<video autoplay muted loop width="80%">
+				<source src="xpbd3.mp4" type="video/mp4">
+			</video>
+		</figure>
 		
 		<h2 id="rigid_bodies">Rigid Bodies</h2>
 		<p>
-		For the fourth project we were assigned to create a 3D rigid body physics engine that could support cubes. In addition to cubes,
-		I added support for arbitrary k-dop shapes, as well as cylinders and capsules. I also implemented two phase collision detection
-		using a BVH in the broad phase. 
+		For the fourth project we were assigned to create a 3D rigid body physics engine that could support cubes. 
+		In addition to cubes, I added support for arbitrary k-dop shapes, as well as capsules 
+		(and spheres as a special case of a capsule). 
+		I also implemented two phase collision detection using a BVH in the broad phase. 
 		</p>
-		
-		<h3>Collision Detection</h3>
-		
-		<h4>Broad Phase</h4>
-		
-		<h4>Narrow Phase</h4>
 		
 		<p>
-		Sadly I couldn't get around to implementing GJK for the narrow phase collision detection. Perhaps that will be a future project. 
+		Collision detection in rigidbody physics engines usually happens in two phases, the broad and narrow phase. The broad phase
+		is responsible for detecting which pairs of bodies <i>could</i> be colliding, and the narrow phase takes in the list
+		of pairs supplied by the broad phase and actually <i>determines</i> if they're colliding. It's also the narrow phase that
+		generates all the information required by collision resolution. 
 		</p>
+		
+		<p>
+		I already covered the collision resolution step in the first project. I pretty much reused the resolution
+		step from that project for this rigidbody physics engine. But as you'll see, the collision detection phase gets much 
+		more involved. 
+		</p>
+		
+		<h3>Broad Phase</h3>
+		<p>
+		An ideal broad phase would simply return only the pairs of bodies that are colliding to the narrow phase. However this is
+		usually infeasible in most cases as then you're pretty much doing all the work of the narrow phase anyways, defeating the
+		point of the broad phase. So instead, the broad phase usually utilizes some spatial partitioning technique to quickly 
+		prune out pairs that are not possible to be colliding, and for pairs that could plausibly be colliding it does a 
+		quick check via checking bounding boxes. 
+		</p>
+		
+		<p>
+		For my broad phase, I first generated a 18-dop bounding box for each body. Each physics body consists of some information such 
+		as mass, velocity, position, as well as a <code>Shape</code>. Every shape has to have a way to construct a 18-dop bounding box
+		given an arbitrary orientation. For example, this is how capsule bounding boxes are generated:
+		</p>
+		
+		<pre><code class="language-java">
+@Override
+public KDOP calcBoundingBox(Quaternion orient, Vec3 pos) {
+	Pair<Vec3, Vec3> ends = this.getEnds(orient, pos);
+	Vec3 e1 = ends.first;
+	Vec3 e2 = ends.second;
+	float[] bmin = new float[KDOP.axes.length];
+	float[] bmax = new float[KDOP.axes.length];
+	for (int i = 0; i < KDOP.axes.length; i++) {
+		bmin[i] = MathUtils.dot(e1, KDOP.axes[i]) - this.radius;
+		bmax[i] = MathUtils.dot(e1, KDOP.axes[i]) + this.radius;
+	}
+	for (int i = 0; i < KDOP.axes.length; i++) {
+		bmin[i] = Math.min(bmin[i], MathUtils.dot(e2, KDOP.axes[i]) - this.radius);
+		bmax[i] = Math.max(bmax[i], MathUtils.dot(e2, KDOP.axes[i]) + this.radius);
+	}
+	return new KDOP(bmin, bmax);
+}
+		</code></pre>
+		
+		<p>
+		Then I created a BVH to quickly find all pairs of intersecting bounding boxes. 
+		The BVH code was relatively straightforwards to write. 
+		Each BVH node stored its own bounding box, its children, and in the case it was a leaf, the bounding boxes and indices of the bodies it contains. 
+		</p>
+		
+		<pre><code class="language-java">
+class BVHNode {
+	public KDOP bounding_box;
+	
+	public BVHNode a = null, b = null;
+
+	public boolean is_leaf;
+	public ArrayList<Pair<KDOP, Integer>> boxes = null;
+}
+		</code></pre>
+		
+		<p>
+		So the actual BVH just implements this <code>buildTree</code> member function that takes in a list of bounding box, body index pairs
+		and builds a <code>BVHNode</code> tree, and saves the root for queries. In <code>buildTree</code> the first thing we do is
+		compute the bounding box of all the boxes passed in
+		</p>
+		
+		<pre><code class="language-java">
+float[] bmin = new float[KDOP.axes.length];
+float[] bmax = new float[KDOP.axes.length];
+float[] dim = new float[KDOP.axes.length];
+float[] med = new float[KDOP.axes.length];
+for (int i = 0; i < aabb_list.size(); i++) {
+	KDOP k = aabb_list.get(i).first;
+	for (int j = 0; j < KDOP.axes.length; j++) {
+		if (i == 0) {
+			bmin[j] = k.bmin[j];
+			bmax[j] = k.bmax[j];
+		}
+		bmin[j] = Math.min(bmin[j], k.bmin[j]);
+		bmax[j] = Math.max(bmax[j], k.bmax[j]);
+	}
+}
+for (int i = 0; i < KDOP.axes.length; i++) {
+	dim[i] = bmax[i] - bmin[i];
+	med[i] = (bmax[i] + bmin[i]) / 2.0f;
+}
+KDOP cur_bb = new KDOP(bmin, bmax);
+		</code></pre>
+		
+		<p>
+		Then we try to look for the axis of greatest separation. This entire part of partitioning the BVH node could use some work, but I 
+		just implemented the first thing that came to mind. 
+		</p>
+		
+		<pre><code class="language-java">
+//just look for maximum separation along all axes	
+int best_sep = 0;
+float max_sep = -1;
+for (int i = 0; i < KDOP.axes.length; i++) {
+	if (dim[i] > max_sep) {
+		max_sep = dim[i];
+		best_sep = i;
+	}
+}
+		</code></pre>
+		
+		<p>
+		Finally we have some logic for either creating a leaf, or creating two children depending on whether or not we can actually partition
+		the node according to the chosen axis. 
+		</p>
+		
+		<pre><code class="language-java">
+//create partition
+ArrayList<Pair<KDOP, Integer>> alist = new ArrayList<>(), blist = new ArrayList<>();
+for (int i = 0; i < aabb_list.size(); i++) {
+	float cmed = (aabb_list.get(i).first.bmin[best_sep] + aabb_list.get(i).first.bmax[best_sep]) / 2.0f;
+	if (cmed < med[best_sep]) {
+		alist.add(aabb_list.get(i));
+	}
+	else {
+		blist.add(aabb_list.get(i));
+	}
+}
+
+//couldn't figure out partition, just make a leaf
+if (alist.size() == 0 || blist.size() == 0) {
+	return new BVHNode(cur_bb, alist.size() != 0 ? alist : blist);
+}
+
+BVHNode a = buildTree(alist), b = buildTree(blist);
+BVHNode node = new BVHNode(cur_bb, a, b);
+return node;
+		</code></pre>
+		
+		<p>
+		Then to actually get the colliding pairs of bounding boxes, I run each bounding box through the BVH using this <code>getIntersections</code> function. 
+		</p>
+		
+		<pre><code class="language-java">
+public ArrayList<Integer> getIntersections(KDOP aabb) {
+	ArrayList<Integer> ans = new ArrayList<>();
+	Queue<BVHNode> q = new ArrayDeque<>();
+	q.add(this.root);
+	while (q.size() != 0) {
+		BVHNode cur = q.peek();
+		q.poll();
+		if (cur == null) continue;
+
+		//check if kdop is intersecting with current bvh node
+		if (!aabb.isIntersecting(cur.bounding_box)) continue;
+
+		//if is leaf, just compare against everything in node
+		if (cur.is_leaf) {
+			for (Pair<KDOP, Integer> p : cur.boxes) {
+				if (p.first.isIntersecting(aabb)) {
+					ans.add(p.second);
+				}
+			}
+			continue;
+		}
+
+		//otherwise, append children to queue
+		q.add(cur.a);
+		q.add(cur.b);
+	}
+	return ans;
+}
+		</code></pre>
+		
+		<h3>Narrow Phase</h3>
+		<p>
+		In the narrow phase, I go through every pair of bodies that have intersecting bounding boxes as determined by the broad phase. 
+		The goal is to not only determine if the two bodies are colliding, but to also generate a representative set of contact points on which to 
+		apply the collision resolution force. For example, consider a rectangular prism resting on top of a table. If we were to only 
+		apply the resolution force onto one point of the prism, then it would become very unstable, but if we were to instead evenly distribute
+		the force across all 4 corners of the prism that are contacting the table, it would rest on the table more stably. 
+		</p>
+		
+		<p>
+		For each different pair of bodies, I have to write different code handling them. For the sake of brevity I'll only cover the KDOP-KDOP
+		narrow phase collision check. First, I convert both the bodies from model space to world space. 
+		</p>
+		
+		<pre><code class="language-java">
+this.ba = m.a;
+this.bb = m.b;
+
+this.sa = (KDOP) ba.shape;
+this.sb = (KDOP) bb.shape;
+
+//generate primary axes rotated to world space
+this.axes_a = new Vec3[this.sa.getAxes().length];
+this.axes_b = new Vec3[this.sb.getAxes().length];
+for (int i = 0; i < this.sa.getAxes().length; i++) {
+	this.axes_a[i] = MathUtils.quaternionRotateVec3(ba.orient, this.sa.getAxes()[i]);
+}
+for (int i = 0; i < this.sb.getAxes().length; i++) {
+	this.axes_b[i] = MathUtils.quaternionRotateVec3(bb.orient, this.sb.getAxes()[i]);
+}
+
+//generate vertices in world space
+this.pts_a = new Vec3[sa.getVertices().length];
+this.pts_b = new Vec3[sb.getVertices().length];
+for (int i = 0; i < this.sa.getVertices().length; i++) {
+	this.pts_a[i] = MathUtils.quaternionRotateVec3(ba.orient, this.sa.getVertices()[i]);
+	this.pts_a[i].addi(ba.pos);
+}
+for (int i = 0; i < this.sb.getVertices().length; i++) {
+	this.pts_b[i] = MathUtils.quaternionRotateVec3(bb.orient, this.sb.getVertices()[i]);
+	this.pts_b[i].addi(bb.pos);
+}
+		</code></pre>
+		
+		<p>
+		Then I use the Separating Axis Theorem to check if the two bodies are actually colliding. The SAT states that if we have two convex
+		shapes and want to see if they are not colliding, then there must be an axis along which we can project both shapes and their projections 
+		won't be colliding. Furthermore, if our convex shapes are kdop bounding boxes, then at least one of the primary kdop axes or the
+		cross product between two kdop axes has to be a valid separating axis. If we're unable to find a separating axis, I use the axis
+		of least penetration as my 'collision normal' axis. 
+		</p>
+		
+		<pre><code class="language-java">		
+//do SAT test
+Vec3 least_axis = new Vec3(0);
+float least_pen = findLeastPenetration(least_axis);
+if (least_pen < 0) {
+	return;
+}
+
+//force separating axis to point from b to a
+if (MathUtils.dot(least_axis, new Vec3(this.bb.pos, this.ba.pos)) < 0) {
+	least_axis.muli(-1);
+}
+
+//ok a collision is happenning, generate contact points. 
+m.didCollide = true;
+m.penetration = least_pen;
+m.separating_axis = new Vec3(least_axis);
+m.contacts = new ArrayList<>();
+
+float[] elow_a = sa.getELow();
+float[] ehigh_a = sa.getEHigh();
+float[] elow_b = sb.getELow();
+float[] ehigh_b = sb.getEHigh();
+		</code></pre>
+		
+		<p>
+		Next is to generate the contact points. I consider two cases: vertex-face and edge-edge. A better solver would also consider face-face 
+		and use the previous timestep contact points to generate the current ones. To generate vertex-face contact points, I need to check for
+		each vertex of one body, whether or not it's contained by the other one. If it is contained, I generate a contact at that point for each
+		face in the other shape with the contact normal being the normal of the face. 
+		</p>
+		
+		<pre><code class="language-java">
+//for each point, check if its colliding with the point in the other shape. 
+ArrayList<Contact> all_contacts = new ArrayList<>();
+for (int i = 0; i < this.pts_a.length; i++) { //compare points in a to b
+	Vec3 pt = new Vec3(this.bb.pos, this.pts_a[i]);
+
+	//see if the point is actually inside the other box
+	boolean inside = true;
+	for (int j = 0; j < this.axes_b.length; j++) {
+		float dot = MathUtils.dot(pt, this.axes_b[j]);
+		if (dot < elow_b[j] || ehigh_b[j] < dot) {
+			inside = false;
+			break;
+		}
+	}
+	if (!inside) {
+		continue;
+	}
+
+	//for each face, generate a contact. 
+	for (int j = 0; j < this.axes_b.length; j++) {
+		float dot = MathUtils.dot(pt, this.axes_b[j]);
+		Vec3 normal = new Vec3(this.axes_b[j]);
+		float pen = 0;
+		if (dot < 0) {
+			normal.muli(-1);
+			pen = dot - elow_b[j];
+		}
+		else {
+			pen = ehigh_b[j] - dot;
+		}
+
+		Contact c = new Contact(this.pts_a[i], normal, pen);
+		all_contacts.add(c);
+	}
+}
+for (int i = 0; i < this.pts_b.length; i++) { //compare points in b to a
+	Vec3 pt = new Vec3(this.ba.pos, this.pts_b[i]);
+
+	//see if the point is actually inside the other box
+	boolean inside = true;
+	for (int j = 0; j < this.axes_a.length; j++) {
+		float dot = MathUtils.dot(pt, this.axes_a[j]);
+		if (dot < elow_a[j] || ehigh_a[j] < dot) {
+			inside = false;
+			break;
+		}
+	}
+	if (!inside) {
+		continue;
+	}
+
+	//for each face, generate a contact. 
+	for (int j = 0; j < this.axes_a.length; j++) {
+		float dot = MathUtils.dot(pt, this.axes_a[j]);
+		Vec3 normal = new Vec3(this.axes_a[j]);
+		float pen = 0;
+		if (dot < 0) {
+			normal.muli(-1);
+			pen = dot - elow_a[j];
+		}
+		else {
+			pen = ehigh_a[j] - dot;
+		}
+
+		//force normal to be oriented from A's perspective
+		normal.muli(-1);
+
+		Contact c = new Contact(this.pts_b[i], normal, pen);
+		all_contacts.add(c);
+	}
+}
+		</code></pre>
+		
+		<p>
+		Next, to gather edge-edge contacts, I compare every pair of edges between the two shapes. We can use some basic geometry to find 
+		if the edges are supposed to be colliding by finding the closest points on each edge to the other edge. Then, if the midpoint between
+		these closest points are within both of the shapes, then I consider the two edges colliding. The normal is then computed as the
+		cross product between the two edges. 
+		</p>
+		
+		<pre><code class="language-java">
+//edge vs. edge collisions
+int[][] edges_a = this.sa.getEdges();
+int[][] edges_b = this.sb.getEdges();
+for (int eia = 0; eia < edges_a.length; eia++) {
+	for (int eib = 0; eib < edges_b.length; eib++) {
+		Vec3 a0 = new Vec3(this.pts_a[edges_a[eia][0]]);
+		Vec3 a1 = new Vec3(this.pts_a[edges_a[eia][1]]);
+
+		Vec3 b0 = new Vec3(this.pts_b[edges_b[eib][0]]);
+		Vec3 b1 = new Vec3(this.pts_b[edges_b[eib][1]]);
+
+		//compute coll normal
+		Vec3 coll_norm = MathUtils.cross(new Vec3(a0, a1), new Vec3(b0, b1));
+		coll_norm.normalize();
+
+		//ensure that collision normal is pointing from b -> a
+		if (MathUtils.dot(coll_norm, new Vec3(bb.pos, ba.pos)) < 0) {
+			coll_norm.muli(-1);
+		}
+
+		//check if they are parallel
+		float parl_dot = Math.abs(MathUtils.dot(new Vec3(a0, a1).normalize(), new Vec3(b0, b1).normalize()));
+		if (Math.abs(parl_dot - 1.0) < 0.001) {
+			continue;
+		}
+
+		Pair<Vec3, Vec3> cpts = MathUtils.lineSegment_lineSegmentClosestPoints(a0, a1, b0, b1);
+
+		//see if halfway between them is inside both a and b
+		Vec3 coll_pt = MathUtils.lerp(cpts.first, 0, cpts.second, 1, 0.5f);
+		boolean inside = true;
+		for (int j = 0; j < this.axes_a.length; j++) {
+			float dot = MathUtils.dot(new Vec3(this.ba.pos, coll_pt), this.axes_a[j]);
+			if (dot < elow_a[j] || ehigh_a[j] < dot) {
+				inside = false;
+				break;
+			}
+		}
+		for (int j = 0; j < this.axes_b.length; j++) {
+			float dot = MathUtils.dot(new Vec3(this.bb.pos, coll_pt), this.axes_b[j]);
+			if (dot < elow_b[j] || ehigh_b[j] < dot) {
+				inside = false;
+				break;
+			}
+		}
+		if (!inside) {
+			continue;
+		}
+
+		//ok, we can take this one as a collision point
+		Contact c = new Contact(coll_pt, coll_norm, MathUtils.dist(cpts.first, cpts.second));
+		all_contacts.add(c);
+	}
+}
+		</code></pre>
+		
+		<p>
+		Finally, I prune out all contacts that are not roughly facing in the direction of the normal generated by the SAT test. This step
+		is probably pretty contrived, but I found it gave better results than just letting every contact through. 
+		</p>
+		
+		<pre><code class="language-java">
+//prune out any contacts that are not roughly facing in the correct direction
+ArrayList<Contact> pruned_contacts = new ArrayList<>();
+for (Contact c : all_contacts) {
+	if (MathUtils.dot(c.norm, least_axis) < 0.25) {
+		continue;
+	}
+	pruned_contacts.add(c);
+}
+
+//at this point, accept any contact. 
+for (Contact c : pruned_contacts) {
+	m.contacts.add(c);
+}
+		</code></pre>
+		
+		<p>
+		All these contacts get sent to the collision resolver which does the actual physics updates. 
+		In the future, I would like to support arbitrary polygon meshes as collision primitives. I would have to implement a much 
+		better narrow phase collision detection algorithm for it, something like GJK. Perhaps that will be a future project. 
+		</p>
+		
+		<h3>Results</h3>
+		<p>
+		In total, my solver could support around a hundred cubes at 60fps. 
+		However, you can see that it doesn't handle objects resting on top of each other that well. 
+		</p>
+		
+		<figure>
+			<video autoplay muted loop width="80%">
+				<source src="rigid1.mp4" type="video/mp4">
+			</video>
+		</figure>
+		
+		<p>
+		In spite of that, I managed to get this table to stand up pretty stably. 
+		</p>
+		
+		<figure>
+			<video autoplay muted loop width="80%">
+				<source src="rigid2.mp4" type="video/mp4">
+			</video>
+		</figure>
+		
+		<p>
+		And here is the capsule and sphere support I mentioned in the beginning. 
+		</p>
+		
+		<figure>
+			<video autoplay muted loop width="80%">
+				<source src="rigid3.mp4" type="video/mp4">
+			</video>
+		</figure>
 		
 		<h2 id="final_project">Final Project</h2>
 		<p>
@@ -790,13 +1309,287 @@ private void RK4Step(float dt) {
 		waves and add buoyancy on top of my rigid body engine so that we could have some stuff interacting with the water. 
 		</p>
 		
-		<h3>FFT</h3>
+		<h3>Wave Basics</h3>
+		<p>
+		In math we can represent waves using the sine function, with $k$ being the 'wavenumber' (amount of periods per unit distance), 
+		$\omega$ being the frequency, and $\phi$ being the base offset:
+		$$A\sin(kx + \omega t + \phi)$$
+		In two dimensions, it's pretty much the same except that $k$ gets replaced with a vector $\vec{k}$ (a 'wavevector') telling you which way the wave is travelling
+		and $|\vec{k}|$ being the wavenumber. However, real water can't be represented accurately by a sine wave. Instead, we use the gerstner wave 
+		which is a closer representation of real life water. With gerstner waves, every point on the surface not only moves up and down, but also 
+		horizontally, so its path resembles more of a circle.
+		</p>
 		
-		<h3>Buoyancy</h3>
+		<figure>
+			<img src="gerstner.png" width="80%">
+		</figure>
+		
+		<p>
+		So how can we use math to represent gerstner waves? Recall eulers identity:
+		$$e^{ix} = \cos(x) + i \sin(x)$$
+		Notice how we can use the imaginary component to encode the horizontal movement. So we can do something like this:
+		$$Ae^{i(\vec{k} \cdot \vec{v} + \omega t + \phi)} = \left(Ae^{i(\omega t + \phi)} \right) e^{i\vec{k} \cdot \vec{v}} = h_{\vec{k}}(t) e^{i\vec{k} \cdot \vec{v}}$$
+		Now observe that $h_{\vec{k}}(t)$ holds all the information to describe the wave with wavevector $\vec{k}$ over time and $e^{i\vec{k} \cdot \vec{v}}$ holds the
+		information to describe it over space. 
+		The idea is to build the final ocean suface out of a superposition of a bunch of gerstner waves:
+		$$\eta_x(t, \vec{v}) = \sum_{\vec{k}} i \frac{\vec{k}_z}{|\vec{k}|} h_{\vec{k}}(t) e^{i\vec{k} \cdot \vec{v}}$$
+		$$\eta_y(t, \vec{v}) = \sum_{\vec{k}} h_{\vec{k}}(t) e^{i\vec{k} \cdot \vec{v}}$$
+		$$\eta_z(t, \vec{v}) = \sum_{\vec{k}} i \frac{\vec{k}_x}{|\vec{k}|} h_{\vec{k}}(t) e^{i\vec{k} \cdot \vec{v}}$$
+		However just superimposing several hundred waves will make for a rather unrealistic looking ocean. What we really want is to be able to superimpose hundreds of thousands
+		or millions of waves of differing wavelengths, amplitudes and directions to make a realistic looking ocean surface. We can do this efficiently by using FFT. 
+		</p>
+		
+		<h3>FFT</h3>
+		<p>
+		The Fast Fourier Transform is an algorithm that can be used to compute the discrete or inverse discrete fourier transform of a sequence. 
+		The reason it's called 'Fast' is because it can compute this transform in $n * \log(n)$ time, much faster than the naive approach which takes $n^2$ time to compute. 
+		Let's first look at the naive DFT to get a sense of what we're trying to compute, then go over how FFT manages to speed it up. 
+		</p>
+		
+		<p>
+		Given the sequence of $N$ complex numbers, $x_0, x_1, \cdots, x_{N - 1}$, the DFT transforms it into another sequence $X_0, X_1, \cdots, X_{N - 1}$ 
+		defined as
+		$$X_k = \sum_{n = 0}^{N - 1} x_n e^{-i 2\pi \frac{k}{N} n}$$
+		Then if we are given $X$ and want to convert back into $x$, we can compute
+		$$x_n = \frac{1}{N} \sum_{k = 0}^{N - 1} X_k e^{i 2\pi \frac{k}{N} n}$$
+		</p>
+		
+		<p>
+		So how does FFT speed this up? I'll just focus on the normal FFT as inverse FFT just differs by a constant. Observe that we can rewrite $X_k$ as
+		$$X_k = \sum_{n = 0}^{N / 2 - 1} x_{2n} e^{-i 2\pi \frac{k}{N} 2n} + \sum_{n = 0}^{N / 2 - 1} x_{2n + 1} e^{-i 2\pi \frac{k}{N} (2n + 1)}$$
+		$$ = \sum_{n = 0}^{N / 2 - 1} x_{2n} e^{-i 2\pi \frac{k}{N / 2} n} + e^{-i 2\pi \frac{k}{N}} \sum_{n = 0}^{N / 2 - 1} x_{2n + 1} e^{-i 2\pi \frac{k}{N / 2} n}$$
+		$$ = E_k + e^{-i 2\pi \frac{k}{N}} O_k$$
+		Notice that $E_k$ is the DFT of the even elements of $x$ and $O_k$ is the DFT of odd elements of $x$. Next, let's try rewriting $X_{k + N/2}$
+		$$X_{k + N/2} = \sum_{n = 0}^{N / 2 - 1} x_{2n} e^{-i 2\pi \frac{k + N/2}{N} 2n} + \sum_{n = 0}^{N / 2 - 1} x_{2n + 1} e^{-i 2\pi \frac{k + N/2}{N} (2n + 1)}$$
+		$$ = \sum_{n = 0}^{N / 2 - 1} x_{2n} e^{-i 2\pi \frac{k}{N / 2} n} - e^{-i 2\pi \frac{k}{N}} \sum_{n = 0}^{N / 2 - 1} x_{2n + 1} e^{-i 2\pi \frac{k}{N / 2} n}$$
+		$$ = E_k - e^{-i 2\pi \frac{k}{N}} O_k$$
+		Seems like the same thing, except the constant in front of $O_k$ has it's sign flipped. Crucially, if we know all $E_n, O_n$ for $0 \leq n \lt N / 2$, then we can 
+		easily compute all $X_0, \cdots, X_{N - 1}$. Now the question becomes that of how to compute $E_n, O_n$? Notice that they are actually themselves the result of a DFT, 
+		so we can apply the same process to compute them. We can keep recursing until $N = 1$ in which case the result of a DFT of one element is just itself. Overall, we'll
+		have to do $\log_2(n)$ recursive steps, so the total complexity is $n * \log(n)$. 
+		</p>
+		
+		<figure>
+			<img src="fft_diagram.png" width="80%">
+			<figcaption>Example of a 'breadth first' computation of FFT. Every element depends on two elements from the previous layer.</figcaption>
+		</figure>
+		
+		<p>
+		Computing this on a CPU is fine, but what I'm really interested in is if it's parallelizable as then we can effectively make FFT into a $\log(n)$ operation. 
+		Actually, if you look at the above diagram, it's pretty easily parallelizable. For each vertical stack of boxes, assign a thread. 
+		Then compute one layer at a time, putting an execution barrier between layers to make sure all the computation is done before moving onto the next layer. 
+		Computing the correct indices to access is relatively tricky, but my friend figured it all out so here is the compute shader source code:
+		</p>
+		
+		<pre><code class="language-glsl">
+shared vec2 arr[2][256];
+int f = 0;
+int t = 1;
+
+vec2 mult(vec2 a, vec2 b) {
+    return vec2(a[0] * b[0] - a[1] * b[1], a[0] * b[1] + a[1] * b[0]);
+}
+
+void fft(const int n, const int i) {
+    const int LOG_N = int(round(log2(n)));
+    const int MINUS_SIDE = 1 << (LOG_N - 1);
+    const int INVERSION = invert ? -1 : 1;
+
+    barrier();
+
+    for (int l = LOG_N - 1; l >= 0; --l) {
+
+        const int SIZE = 1 << (LOG_N - l);
+        const int MINI_MOVEMENT = 1 << l;
+
+        const int index = (i & (MINUS_SIDE-1)) >> l;
+
+        float rad = INVERSION * 2 * M_PI * index / SIZE;
+        vec2 toMult = vec2(cos(rad), sin(rad));
+
+        const int group = i & (MINI_MOVEMENT-1);
+
+        const int MOVEMENT = index << (l+1);
+
+        const int i2 = group + MOVEMENT;
+        const int i3 = group + MOVEMENT + MINI_MOVEMENT;
+
+        if ((i & MINUS_SIDE) == 0)
+        	arr[t][i] = arr[f][i2] + mult(toMult, arr[f][i3]);
+        else
+        	arr[t][i] = arr[f][i2] - mult(toMult, arr[f][i3]);
+
+        barrier();
+
+        t ^= 1;
+        f ^= 1;
+    }
+}
+		</code></pre>
+		
+		<p>
+		However, why is this useful in simulating surface waves? Let's look back at our formulation of $\eta_y(t, \vec{v})$. 
+		Suppose that our wavevectors are limited to integer coordinates, and are in the grid $[0, N - 1] \times [0, N - 1]$. 
+		Then $\eta_y$ would look like
+		$$\eta_y(t, (u, v)) = \sum_{x = 0}^{N - 1} \sum_{y = 0}^{N - 1} h_{(x, y)}(t) e^{i(ux + vy)}$$
+		This is actually pretty much the formula for inverse DFT, minus some constant factor differences. 
+		Intuitively this makes sense as if we describe the amplitude and phase of each wavevector in the frequency domain, when we
+		take the inverse DFT we'll get the superposition of all of the waves in the time domain. 
+		</p>
+		
+		<figure>
+			<img src="fft_2d_space.png" width="70%">
+			<figcaption>The left side is time domain and the right side is frequency domain. The FFT has been shifted so that the wavevectors originate from the center.</figcaption>
+		</figure>
+		
+		<p>
+		Now the only question left is how do we do 2D FFT? It's actually pretty simple, we just do FFT on all the rows, then take the result and do FFT on all the columns. 
+		A cool thing about generating waves this way is that our resulting displacement texture will be completely tileable. This is true because
+		all the wavenumbers are described as fractions of $N$. 
+		One thing I left out here is how to shift the origin of the frequency domain. I'll leave that as an exercise to the reader teehee.
+		</p>
+		
+		<h3>Ocean Spectra Generation</h3>
+		<p>
+		Now that we know how to generate our displacement texture, how do we generate the frequency domain texture that we'll feed in as input to the FFT?
+		The first thing to keep in mind is the Dispersion Relation. In mathematics, the frequency and wavenumber of a wave can be whatever we like, but in real
+		life water surface waves, they are related according to a Dispersion Relation:
+		$$\omega(k) = \sqrt{gk \tanh(kh)}$$
+		where $g$ is gravity in m/s and $h$ is the water depth in meters. Since the frequency is fixed for each wavevector, all we have to do now is to decide on the 
+		amplitude for each wavevector.
+		</p>
+		
+		<p>
+		First though, a bit of theory on how waves are formed. Ocean waves are produced by the wind. The faster the wind, the longer it blows, and
+		the larger the area the wind blows over (the fetch), the bigger the waves. Waves can be described by a Wave Spectrum, which is a function mapping frequency
+		to the amount of energy carried by waves of that frequency.  
+		</p>
+		
+		<figure>
+			<img src="jonswap.jpg" width="40%">
+			<figcaption>Wave spectra of a developing sea for different fetches</figcaption>
+		</figure>
+		
+		<p>
+		Since wave spectra will vary from location to location, I chose to use the models generated by the JONSWAP spectrum sampled from the north sea.
+		From analyzing the JONSWAP data, <a href="https://www.wikiwaves.org/index.php/Hasselmann_et_al._1973">Hasselmann et al. 1973</a> came up with the following fitted function
+		for the energy spectrum. 
+		$$S_j(\omega) = \frac{\alpha g^2}{\omega^5} \exp \left[-\frac{5}{4} \left(\frac{\omega_p}{\omega} \right)^4 \right] \gamma^r$$
+		$$r = \exp \left[-\frac{(\omega - \omega_p)^2}{2 \sigma^2 \omega^2_p} \right]$$
+		The values of the constants were also determined as
+		$$\alpha = 0.076 \left(\frac{U^2_{10}}{Fg} \right)^{0.22}$$
+		$$\omega_p = 22 \left(\frac{g^2}{U_{10} F} \right)$$
+		$$\gamma = 3.3$$
+		$$\sigma = 0.07$$
+		where $F$ is the fetch and $U_{10}$ is the wind speed 10 meters above the surface. 
+		</p>
+		
+		<p>
+		Next is the model describing directional
+		spreading, or how much wave energy gets dispersed as a function of the deviation from the primary wind direction. 
+		Of course, waves that are more in line with the wind direction tend to be stronger than those that are not aligned. 		
+		However, not all waves are going to be generated locally, some are going to be generated in another location and propagate here. 
+		These waves are called 'swell', and they are characterized by being very long and parallel. I'm too lazy to translate
+		this into nice math equations so here is the code. Note that <code>DirectionSpectrum</code> corresponds to $D(\omega, \theta)$. 
+		</p>
+		
+		<pre><code class="language-glsl">
+float cos2_spread(vec2 k) {
+	float c = dot(normalize(k), wind_dir);
+	if(c <= 0) return 0;
+	return 2.0 / pi * c * c;
+}
+
+float lerp(float x1, float x2, float t) {
+	return (1.0 - t) * x1 + t * x2;
+}
+
+float NormalisationFactor(float s) {
+	float s2 = s * s;
+	float s3 = s2 * s;
+	float s4 = s3 * s;
+	if (s < 5) return -0.000564 * s4 + 0.00776 * s3 - 0.044 * s2 + 0.192 * s + 0.163;
+	else return -4.80e-08 * s4 + 1.07e-05 * s3 - 9.53e-04 * s2 + 5.90e-02 * s + 3.93e-01;
+}
+
+float Cosine2s(float theta, float s) {
+	return NormalisationFactor(s) * pow(abs(cos(0.5 * theta)), 2 * s);
+}
+
+float SpreadPower(float omega, float peakOmega) {
+	if (omega > peakOmega) return 9.77 * pow(abs(omega / peakOmega), -2.5);
+	else return 6.97 * pow(abs(omega / peakOmega), 5);
+}
+
+float DirectionSpectrum(float theta, float omega, vec2 k) {
+	float wind_theta = atan(wind_dir.y, wind_dir.x);
+	float s = SpreadPower(omega, omega_p) + 16.0 * tanh(min(omega / omega_p, 20.0)) * swell * swell;
+	return lerp(cos2_spread(k), Cosine2s(theta - wind_theta, s), spread_blend);
+}
+		</code></pre>
+		
+		<p>
+		Finally, for each pixel in our ocean spectra texture, we can get the initial complex value of $h_{\vec{k}}(0)$ as
+		$$h_{\vec{k}}(0) = \frac{1}{\sqrt{2}} (\zeta_1 + i \zeta_2) \sqrt{2 S(\omega) D(\omega, \theta) \frac{d\omega(|\vec{k}|)}{dk} \Delta \vec{k}_x \Delta \vec{k}_z}$$
+		where $\zeta_1, \zeta_2$ are normally distributed random variables. Finally to evolve $h$ over time, we can use
+		$$h_{\vec{k}}(t) = h_{\vec{k}}(0) e^{i\omega(k)t} + h_{-\vec{k}}(0) e^{-i\omega(k)t}$$
+		This ensures that the result of the FFT is entirely real, so we can use both the real and imaginary components to
+		compute things in the FFT, cutting the amount of FFTs we need in half. 
+		</p>
+		
+		<p>
+		If you did everything correctly, you should get something like this. On the left is the generated spectra and 
+		on the right is the result of the inverse FFT with the spectra as input. The top spectra has significant swell, 
+		while the bottom one has no swell. 
+		Note that I scaled up the spectra several hundred times so that you can actually see it. 
+		</p>
+		
+		<figure>
+			<img src="ocean_spectra.png" width="70%">
+		</figure>
 		
 		<h3>Results</h3>
+		<p>
+		I added a rudimentary atmospheric scattering shader to render the skybox, and used some PBR to render the water. 
+		It took me a while to tune the parameters to get something I liked. We also tried to add foam, but it didn't turn out too well.
+		</p>
+		
+		<figure>
+			<video autoplay muted loop width="80%">
+				<source src="water1.mp4" type="video/mp4">
+			</video>
+		</figure>
+		
+		<p>
+		Finally, buoyancy was kind of tacked on at the last moment. We had spent most of our time getting the FFT to work
+		and the wave to look good. 
+		</p>
+		
+		<figure>
+			<video autoplay muted loop width="80%">
+				<source src="water2.mp4" type="video/mp4">
+			</video>
+		</figure>
 		
 	</div>
+	
+	<script>
+	document.addEventListener("DOMContentLoaded", () => {
+	  const videos = document.querySelectorAll("video");
+
+	  const observer = new IntersectionObserver((entries) => {
+	    entries.forEach(entry => {
+	      if (entry.isIntersecting) {
+	        entry.target.play(); // play when visible
+	      } else {
+	        entry.target.pause(); // pause when offscreen
+	      }
+	    });
+	  }, { threshold: 0.25 }); // only count as visible if 25% is on screen
+
+	  videos.forEach(video => observer.observe(video));
+	});
+	</script>
 </div>
 
 

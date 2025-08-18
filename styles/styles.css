@@ -143,6 +143,18 @@ img {
 	box-shadow: 2px 2px 5px #aaaaaa;
 }
 
+video {
+	padding: 5px;
+	border: 1px solid black;
+	margin: auto;
+	text-align: center;
+	
+	position: relative;
+	display: inline-block;
+	
+	box-shadow: 2px 2px 5px #aaaaaa;
+}
+
 img.pixelart{
 	image-rendering: pixelated;
 }
