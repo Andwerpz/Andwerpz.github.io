@@ -364,7 +364,7 @@ b.pos.addi(poscorr_b);
 		
 		<!-- show image of spheres -->
 		<figure>
-			<video autoplay muted loop width="60%">
+			<video muted width="60%" preload="metadata" controls>
 				<source src="balls1.mp4" type="video/mp4">
 			</video>
 		</figure>
@@ -376,7 +376,7 @@ b.pos.addi(poscorr_b);
 		
 		<!-- show image of textured spheres -->
 		<figure>
-			<video autoplay muted loop width="60%">
+			<video muted width="60%" preload="metadata" controls>
 				<source src="balls2.mp4" type="video/mp4">
 			</video>
 			<figcaption>Looks much better now</figcaption>
@@ -657,8 +657,8 @@ Particle getParticle(int ind, int local_particle_start) {
 		
 		<!-- show image of sph particles -->
 		<figure>
-			<video autoplay muted loop width="80%">
-				<source src="sph1.mp4" type="video/mp4">
+			<video muted width="80%" preload="metadata" controls>
+			  	<source src="sph1.mp4" type="video/mp4">
 			</video>
 		</figure>
 		
@@ -669,7 +669,7 @@ Particle getParticle(int ind, int local_particle_start) {
 		
 		<!-- show image of sph nice render -->
 		<figure>
-			<video autoplay muted loop width="80%">
+			<video muted width="80%" preload="metadata" controls>
 				<source src="sph2.mp4" type="video/mp4">
 			</video>
 		</figure>
@@ -809,7 +809,7 @@ private void RK4Step(float dt) {
 		
 		<!-- show comparison videos of euler vs RK4 on ball mesh -->
 		<figure>
-			<video autoplay muted loop width="80%">
+			<video muted width="80%" preload="metadata" controls>
 				<source src="xpbd1.mp4" type="video/mp4">
 			</video>
 		</figure>
@@ -821,7 +821,7 @@ private void RK4Step(float dt) {
 		
 		<!-- show comparison videos of RK4 vs XPBD on bunny mesh -->
 		<figure>
-			<video autoplay muted loop width="80%">
+			<video muted width="80%" preload="metadata" controls>
 				<source src="xpbd2.mp4" type="video/mp4">
 			</video>
 		</figure>
@@ -834,7 +834,7 @@ private void RK4Step(float dt) {
 		
 		<!-- show XPBD dragon mesh -->
 		<figure>
-			<video autoplay muted loop width="80%">
+			<video muted width="80%" preload="metadata" controls>
 				<source src="xpbd3.mp4" type="video/mp4">
 			</video>
 		</figure>
@@ -1277,7 +1277,7 @@ for (Contact c : pruned_contacts) {
 		</p>
 		
 		<figure>
-			<video autoplay muted loop width="80%">
+			<video muted width="80%" preload="metadata" controls>
 				<source src="rigid1.mp4" type="video/mp4">
 			</video>
 		</figure>
@@ -1287,7 +1287,7 @@ for (Contact c : pruned_contacts) {
 		</p>
 		
 		<figure>
-			<video autoplay muted loop width="80%">
+			<video muted width="80%" preload="metadata" controls>
 				<source src="rigid2.mp4" type="video/mp4">
 			</video>
 		</figure>
@@ -1297,7 +1297,7 @@ for (Contact c : pruned_contacts) {
 		</p>
 		
 		<figure>
-			<video autoplay muted loop width="80%">
+			<video muted width="80%" preload="metadata" controls>
 				<source src="rigid3.mp4" type="video/mp4">
 			</video>
 		</figure>
@@ -1555,7 +1555,7 @@ float DirectionSpectrum(float theta, float omega, vec2 k) {
 		</p>
 		
 		<figure>
-			<video autoplay muted loop width="80%">
+			<video muted width="80%" preload="metadata" controls>
 				<source src="water1.mp4" type="video/mp4">
 			</video>
 		</figure>
@@ -1566,30 +1566,13 @@ float DirectionSpectrum(float theta, float omega, vec2 k) {
 		</p>
 		
 		<figure>
-			<video autoplay muted loop width="80%">
+			<video muted width="80%" preload="metadata" controls>
 				<source src="water2.mp4" type="video/mp4">
 			</video>
 		</figure>
 		
 	</div>
 	
-	<script>
-	document.addEventListener("DOMContentLoaded", () => {
-	  const videos = document.querySelectorAll("video");
-
-	  const observer = new IntersectionObserver((entries) => {
-	    entries.forEach(entry => {
-	      if (entry.isIntersecting) {
-	        entry.target.play(); // play when visible
-	      } else {
-	        entry.target.pause(); // pause when offscreen
-	      }
-	    });
-	  }, { threshold: 0.25 }); // only count as visible if 25% is on screen
-
-	  videos.forEach(video => observer.observe(video));
-	});
-	</script>
 </div>
 
 
