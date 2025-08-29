@@ -1377,17 +1377,129 @@ TemplateMapping* TemplatedFunction::calc_mapping(std::vector<Type*> arg_types) {
 		Before emitting assembly, I preprocess the AST so that all overloaded operators are turned into function calls, therefore all non-leaf nodes
 		will represent a builtin operator. Then, I emit the assembly such that the expression nodes will be computed in a postorder DFS traversal ordering. 
 		To make it easier, I wrote every builtin operator to have roughly the same interface, for example binary operators will always expect the left
-		argument in <code>%rax</code>, the right argument in <code>%rcx</code> and if the left argument is an l-value, its address in <code>%rbx</code>.
+		argument in <code>%rax</code>, the right argument in <code>%rbx</code> and if the left argument is an l-value, its address in <code>%rcx</code>.
 		All builtin operators will place the return value in <code>%rax</code>. 
 		</p>
 		
 		<p>
-		
+		For example, this is what emitting a binary arithmetic operator looks like:
 		</p>
+		
+		<div id="asm_binary_arithmetic"></div>
+		<script>
+		insertCodeBlock(`
+right->emit_asm();
+emit_push("%rax", "ExprBinary::emit_asm() : save right");
+left->emit_asm();
+emit_pop("%rbx", "ExprBinary::emit_asm() : save right");
+
+Operator *o = get_called_operator(left, str_op, right);
+assert(dynamic_cast<BuiltinOperator*>(o) != nullptr);
+dynamic_cast<BuiltinOperator*>(o)->emit_asm();
+		`, "asm_binary_arithmetic");
+		</script>
+		
+		<p>
+		<code>emit_push()</code> is just a wrapper that keeps track of descriptions of what's on the stack and makes sure the descriptions match when <code>emit_pop()</code> is called. 
+		Of course, if the operator has special default behaviour we'll sometimes need to emit some custom code. Probably the most custom code I wrote for an operator was for
+		the assignment and assign in place operators. I first check if the type being assigned is primitive, and if so, we can just copy the value into the variable's memory location. 
+		</p>
+		
+		<div id="asm_assignment_primitive"></div>
+		<script>
+		insertCodeBlock(`
+Type *lt = left->resolve_type(), *rt = right->resolve_type();
+assert(lt->equals(rt));
+
+if(is_type_primitive(lt)) {
+    //eval right r-value
+    right->emit_asm();
+
+    //save value
+    emit_push("%rax", "ExprBinary::emit_asm() : = save right");
+
+    //evaluate left l-value
+    left->emit_asm();
+
+    //move right value into left mem location
+    int sz = lt->calc_size();
+    fout << indent() << "mov %rcx, %rbx\\n";
+    emit_pop("%rax", "ExprBinary::emit_asm() : = save right");
+    emit_mem_store(sz);
+}
+		`, "asm_assignment_primitive");
+		</script>
+		
+		<p>
+		Otherwise, we have to invoke the copy constructor. One note on how structs are represented in memory: if you have a variable that 'is' the struct, like <code>A foo = new A()</code>, 
+		I don't actually store the struct on the stack, instead I store a pointer to the struct. This does make it so that <code>A</code> and <code>A*</code> are identical on the stack, 
+		however I have a bunch of code to handle this special case so that it's transparent to the user. So what a constructor really returns is just a pointer to the start of the newly
+		constructed struct's memory. This decision was mostly made to make stack management easier, this way all variables can be stored in a register and using 8 bytes on the stack. 
+		</p>
+		
+		<div id="asm_assignment_struct"></div>
+		<script>
+		insertCodeBlock(`
+else {
+    //generate right struct
+    right->emit_asm();
+
+    //create temp struct reference variable 
+    push_declaration_stack();
+    if(asm_debug) fout << indent() << "# expression struct assignment tmp variable\\n";
+    Identifier *id = new Identifier(create_new_tmp_variable_name());
+    Variable *v = add_variable(new ReferenceType(rt), id);
+    emit_push("%rax", id->name);
+    v->addr = std::to_string(local_offset) + "(%rbp)";
+
+    //generate left struct. %rax should now hold struct mem location
+    left->emit_asm();
+    
+    //if we're not constructing in place, destruct left struct without dealloccing
+    if(str_op != ":=") {
+        emit_push("%rax", "ExprBinary::emit_asm() : save left addr before destruct");
+        emit_destructor_call(lt, false);
+        emit_pop("%rax", "ExprBinary::emit_asm() : save left addr before destruct");
+    }
+
+    //use copy constructor to overwrite left struct mem location
+    ConstructorCall *cc = new ConstructorCall(lt, {new Expression(new ExprPrimary(id))});
+    assert(cc->resolve_called_constructor() != nullptr);
+    cc->emit_asm(false);    //%rax should now hold struct mem location
+
+    //if the right struct is not an lvalue, deallocate it
+    //This is not handled by pop_declaration_stack() as the temp variable is of reference type
+    if(!right->is_lvalue()){
+        //save left mem addr
+        emit_push("%rax", "ExprBinary::emit_asm() : save struct addr during right dealloc");
+        
+        //put addr to struct in %rax
+        fout << indent() << "movq " << v->addr << ", %rax\\n";
+
+        //call destructor
+        emit_destructor_call(rt, true);
+        
+        //retrieve left mem addr
+        emit_pop("%rax", "ExprBinary::emit_asm() : save struct addr during right dealloc");
+    }
+
+    //clean up temp variables
+    pop_declaration_stack();
+
+    //%rax should hold address, copy it over to %rcx
+    fout << indent() << "mov %rax, %rcx\\n";
+}
+
+//the value of left after the assignment should be in %rax
+//the address of left should be in %rcx
+		`, "asm_assignment_struct");
+		</script>
 		
 		<h3>Function Calls</h3>
 		<p>
-		
+		Calling a function is just a matter of building the arguments properly on the stack, and then doing <code>call label</code>. The function itself is then
+		responsible for setting up the rest of the stack frame (saving the old <code>%rbp</code>). To build the arguments on the stack, I take advantage of my variable
+		system to just create compiler temporary variables on the stack that each correspond to an argument. 
 		</p>		
 		
 		<h3>References</h3>
