@@ -101,6 +101,11 @@ code {
 	font-size: 13px;
 }
 
+code, pre {
+	tab-size: 4;
+	-moz-tab-size: 4;
+}
+
 li {
 	color: #212121;
 	line-height: 1.4;

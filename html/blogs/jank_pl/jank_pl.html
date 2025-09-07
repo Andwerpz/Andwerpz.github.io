@@ -9,7 +9,7 @@
 <script src = "https://cdn.jsdelivr.net/npm/p5@1.2.0/lib/p5.js"></script>
 <script src="http://cdnjs.cloudflare.com/ajax/libs/p5.js/0.5.6/addons/p5.dom.js"></script>
 <script src = "../../../js/banner/sketch.js"></script>
-<script src = "../../../js/banner/boid.js"></script>	
+<script src = "../../../js/banner/boid.js"></script>    
 
 <script type="text/x-mathjax-config">
     MathJax.Hub.Config({
@@ -57,113 +57,118 @@ function insertCodeBlock(str, target) {
 </div>
 
 <div class = "header">
-	<div class = "header-text">
-		<h1>jank-pl</h1>
-	</div>
+    <div class = "header-text">
+        <h1>jank-pl</h1>
+    </div>
 </div>
-	
+    
 <div class = "nav_links">
-	<div class = "nav_link">
-		<a href = "../../../small_projects.html">Small Projects</a>
-	</div>
-	<div class = "nav_link">
-		<a href = "../../../index.html">Main Page</a>
-	</div>
-	<div class = "nav_link">
-		<a href = "../../../about_me.html">About Me</a>
-	</div>
+    <div class = "nav_link">
+        <a href = "../../../small_projects.html">Small Projects</a>
+    </div>
+    <div class = "nav_link">
+        <a href = "../../../index.html">Main Page</a>
+    </div>
+    <div class = "nav_link">
+        <a href = "../../../about_me.html">About Me</a>
+    </div>
 </div>
 
 <div class = "sidebar">
-	
+	<a href = "#overview">Overview</a> <br>
+	<a href = "#parsing">Parsing</a> <br>
+	<a href = "#semantic_analysis">Semantic Analysis</a> <br>
+	<a href = "#assembly_codegen">Assembly Codegen</a> <br>
+	<a href = "#miscellaneous_features">Miscellaneous Features</a> <br>
+	<a href = "#language_server">Language Server</a> <br>
+	<a href = "#improvements">Improvements</a> <br>
 </div>
 
 <div class = "page">
-	<div class = "blog">
-		<p>
-		I decided that this summer I would deviate from my normal graphics related projects to instead design a language and build a compiler for it. 
-		Thus, <b>jank-pl</b> was born and working on the language turned out to be really fun. 
-		If you are interested in making a language yourself, I would highly recommend that while making the language 
-		you also try to simultaneously make something in the language. This is so that new language features get motivated naturally and you see whether or not the design
-		decisions that you made with your language are actually good or not. In my case, I'm currently making an operating system using jank-pl, aptly named <b>jank-os</b>.
-		I won't talk about it too much here, however I'll reference it whenever it spawned a new feature or affected a design decision. 
-		If you want to see the language in its current form, you can take a look at the repo <a href="https://github.com/Andwerpz/jank-pl">here</a>. 
-		</p>
-		
-		<h2>Overview</h2>
-		<p>
-		For the design of my language, I decided to copy the behaviour and syntax of C, but with some key additional features:
-		</p>
-		<ul>
-			<li> Operator overloading </li>
-			<li> Templated structs, functions, and overloads </li>
-			<li> Struct member functions </li>
-		</ul>
-		<p>
-		Once we have the goal of what the language should look like, we need to then figure out what exactly the compiler is going to do. 
-		Usually a compiler pipeline looks like this:
-		</p>
-		
-		<figure>
-			<img src="compiler_pipeline_good.png" width="70%">
-		</figure>
-		
-		<p>
-		First, the compiler should recieve raw source code, tokenize it, and use that token stream to generate a Concrete Syntax Tree. The structure of this tree
-		is defined by some grammar, and the reason it's called 'concrete' is that it still should match one-to-one with the source code. 
-		Next, the CST gets refined into only the parts needed for semantic analysis, turning into an Abstract Syntax Tree. 
-		Using the AST, we can do stuff like generating struct layouts, resolving templates, enforcing local variable scope, etc; this is the semantic analysis phase.  
-		When the semantic analysis phase finishes, we should be left with a desugared, concrete version of the code, which we then turn into some Intermediate Representation. 
-		IR should be closer to the generated assembly code, but still general enough such that we can take the IR and emit any flavor of assembly we want. 
-		The IR representation is also where the bulk of the optimizations will happen, stuff such as resolving const expressions, removing duplicate calls to pure functions, 
-		turning multiplies by powers of 2 into bitshifts, and so on. Finally, the codegen phase will take the optimized IR and generate corresponding assembly code,
-		which is taken by the linker to actually generate the executable machine code. 
-		However for my compiler, I cut out a few steps:
-		</p>
-		
-		<figure>
-			<img src="compiler_pipeline_jank.png" width="70%">
-		</figure>
-		
-		<p>
-		I skip generating tokens, the entire IR phase, and machine code generation. Of course, I still need to generate machine code, so after I generate my assembly code I feed it into gcc 
-		to generate the machine code. Finally, we need to decide on what CPU architecture and OS our compiler will be targeted towards, I chose ARM x86_64 and Linux. 
-		</p>
-		
-		<h2>Parsing</h2>
-		<p>
-		The goal of the parsing phase is to take in source code and turn it into a concrete syntax tree. First, we'll see how to define a grammar, 
-		defining the structure of the concrete syntax tree, then we'll see how we can automate the process of writing a parser based on an EBNF grammar. 
-		</p>
-		
-		<h3>EBNF</h3>
-		<p>
-		EBNF stands for <b>E</b>xtended <b>B</b>ackus-<b>N</b>aur <b>F</b>orm. An EBNF grammar is just a set of rules. 
-		</p>
-		
-		<pre><code>
+    <div class = "blog">
+        <p>
+        I decided that this summer I would deviate from my normal graphics related projects to instead design a language and build a compiler for it. 
+        Thus, <b>jank-pl</b> was born and working on the language turned out to be really fun. 
+        If you are interested in making a language yourself, I would highly recommend that while making the language 
+        you also try to simultaneously make something in the language. This is so that new language features get motivated naturally and you see whether or not the design
+        decisions that you made with your language are actually good or not. In my case, I'm currently making an operating system using jank-pl, aptly named <b>jank-os</b>.
+        If you want to see the language in its current form, you can take a look at the repo <a href="https://github.com/Andwerpz/jank-pl">here</a>. 
+        </p>
+        
+        <h2 id="overview">Overview</h2>
+        <p>
+        For the design of my language, I decided to copy the behaviour and syntax of C, but with some key additional features:
+        </p>
+        <ul>
+            <li> Operator overloading </li>
+            <li> Templated structs, functions, and overloads </li>
+            <li> Struct member functions </li>
+        </ul>
+        <p>
+        Once we have the goal of what the language should look like, we need to then figure out what exactly the compiler is going to do. 
+        Usually a compiler pipeline looks like this:
+        </p>
+        
+        <figure>
+            <img src="compiler_pipeline_good.png" width="70%">
+        </figure>
+        
+        <p>
+        First, the compiler should recieve raw source code, tokenize it, and use that token stream to generate a Concrete Syntax Tree. The structure of this tree
+        is defined by some grammar, and the reason it's called 'concrete' is that it still should match one-to-one with the source code. 
+        Next, the CST gets refined into only the parts needed for semantic analysis, turning into an Abstract Syntax Tree. 
+        Using the AST, we can do stuff like generating struct layouts, resolving templates, enforcing local variable scope, etc; this is the semantic analysis phase.  
+        When the semantic analysis phase finishes, we should be left with a desugared, concrete version of the code, which we then turn into some Intermediate Representation. 
+        IR should be closer to the generated assembly code, but still general enough such that we can take the IR and emit any flavor of assembly we want. 
+        The IR representation is also where the bulk of the optimizations will happen, stuff such as resolving const expressions, removing duplicate calls to pure functions, 
+        turning multiplies by powers of 2 into bitshifts, and so on. Finally, the codegen phase will take the optimized IR and generate corresponding assembly code,
+        which is taken by the linker to actually generate the executable machine code. 
+        However for my compiler, I cut out a few steps:
+        </p>
+        
+        <figure>
+            <img src="compiler_pipeline_jank.png" width="70%">
+        </figure>
+        
+        <p>
+        I skip generating tokens, the entire IR phase, and machine code generation. Of course, I still need to generate machine code, so after I generate my assembly code I feed it into gcc 
+        to generate the machine code. Finally, we need to decide on what CPU architecture and OS our compiler will be targeted towards, I chose ARM x86_64 and Linux. 
+        </p>
+        
+        <h2 id="parsing">Parsing</h2>
+        <p>
+        The goal of the parsing phase is to take in source code and turn it into a concrete syntax tree. First, we'll see how to define a grammar, 
+        defining the structure of the concrete syntax tree, then we'll see how we can automate the process of writing a parser based on an EBNF grammar. 
+        </p>
+        
+        <h3>EBNF</h3>
+        <p>
+        EBNF stands for <b>E</b>xtended <b>B</b>ackus-<b>N</b>aur <b>F</b>orm. An EBNF grammar is just a set of rules. 
+        </p>
+        
+        <pre><code>
 greeting = "hello " , ( "dylan" | "steven" ) ;
-		</code></pre>
-		
-		<p>
-		In the above grammar, we have defined one rule: <code>greeting</code>. Anything contained within quotes is referred to
-		as a 'terminal', and they serve as concrete termination points for the parser; they're pretty much just string literals. 
-		Commas denote concatenation and <code>|</code> denotes alternation, so within that scope, the entire scope can match to any one of the terms. 
-		For example, the two valid strings that can match to <code>greeting</code> are <code>hello dylan</code> and <code>hello steven</code>. 
-		</p>
-		
-		<pre><code>
+        </code></pre>
+        
+        <p>
+        In the above grammar, we have defined one rule: <code>greeting</code>. Anything contained within quotes is referred to
+        as a 'terminal', and they serve as concrete termination points for the parser; they're pretty much just string literals. 
+        Commas denote concatenation and <code>|</code> denotes alternation, so within that scope, the entire scope can match to any one of the terms. 
+        For example, the two valid strings that can match to <code>greeting</code> are <code>hello dylan</code> and <code>hello steven</code>. 
+        </p>
+        
+        <pre><code>
 greetings = [ greeting , { ", " , greeting } ] ;
-		</code></pre>
-		
-		<p>
-		We can use rules within other rules, and we've also introduced some new grouping modifiers, <code>{}</code> denotes zero-or-more, and <code>[]</code> denotes zero-or-one. 
-		So for example, <code>hello steven, hello dylan, hello steven</code> and the empty string will match to the above rule. 
-		When defining stuff with EBNF, it's pretty useful to actually define the EBNF grammar itself using EBNF. It might not seem too useful now, but 
-		once we get to automatically generating our EBNF parsers, it'll be a valuable sanity check. Here is my definition of EBNF:
-		</p>
-		
-		<pre><code>
+        </code></pre>
+        
+        <p>
+        We can use rules within other rules, and we've also introduced some new grouping modifiers, <code>{}</code> denotes zero-or-more, and <code>[]</code> denotes zero-or-one. 
+        So for example, <code>hello steven, hello dylan, hello steven</code> and the empty string will match to the above rule. 
+        When defining stuff with EBNF, it's pretty useful to actually define the EBNF grammar itself using EBNF. It might not seem too useful now, but 
+        once we get to automatically generating our EBNF parsers, it'll be a valuable sanity check. Here is my definition of EBNF:
+        </p>
+        
+        <pre><code>
 letter = "A" | "B" | "C" | "D" | "E" | "F" | "G"
        | "H" | "I" | "J" | "K" | "L" | "M" | "N"
        | "O" | "P" | "Q" | "R" | "S" | "T" | "U"
@@ -209,30 +214,30 @@ alternation = concatenation , { rws , "|" , rws , concatenation } ;
 rule = identifier , rws , "=" , rws , alternation , rws , ";" ;
 include = "#include" , rws , terminal , rws , ";" ;
 grammar = { ows , include } , { ows , rule } , ows ;
-		</code></pre>
-		
-		<p>
-		I also included some extra features such as includes, escapes, and <code><></code> which denotes one-or-more. You can see that this grammar also 
-		nicely encodes operator precedence in the <code>concatenation</code> and <code>alternation</code> rules. 
-		</p>
-		
-		<h3>Parse Generator</h3>
-		<p>
-		Now that we've written our grammar, we still need to write the parser that takes in a string and constructs a CST according to the grammar. 
-		Since we don't want to be stuck rewriting our parser every time the grammar of our language needs to change (it will need to change a lot), 
-		we probably want to do this automatically. Therefore, we need to write a Parse Generator, a program that takes in some grammar and outputs
-		an executable that can parse whatever is defined by the grammar. 
-		</p>
-		
-		<p>
-		However, we can't really get away from writing any parsing code, we need to write a parser that can parse an EBNF grammar as defined above. 
-		I decided that for the parse generator and the language parser, I would stick to a greedy parser as it's easy to write, fast, and I'm willing to
-		design my language grammar around it. To facilitate the parsing, I wrote a little parse controller:
-		</p>
-		
-		<div id="parse_generator_controller"></div>
-		<script>
-		insertCodeBlock(`
+        </code></pre>
+        
+        <p>
+        I also included some extra features such as includes, escapes, and <code><></code> which denotes one-or-more. You can see that this grammar also 
+        nicely encodes operator precedence in the <code>concatenation</code> and <code>alternation</code> rules. 
+        </p>
+        
+        <h3>Parse Generator</h3>
+        <p>
+        Now that we've written our grammar, we still need to write the parser that takes in a string and constructs a CST according to the grammar. 
+        Since we don't want to be stuck rewriting our parser every time the grammar of our language needs to change (it will need to change a lot), 
+        we probably want to do this automatically. Therefore, we need to write a Parse Generator, a program that takes in some grammar and outputs
+        an executable that can parse whatever is defined by the grammar. 
+        </p>
+        
+        <p>
+        However, we can't really get away from writing any parsing code, we need to write a parser that can parse an EBNF grammar as defined above. 
+        I decided that for the parse generator and the language parser, I would stick to a greedy parser as it's easy to write, fast, and I'm willing to
+        design my language grammar around it. To facilitate the parsing, I wrote a little parse controller:
+        </p>
+        
+        <div id="parse_generator_controller"></div>
+        <script>
+        insertCodeBlock(`
 //the grammar to be parsed
 string parse_str;
 
@@ -274,39 +279,39 @@ string next_chars(int n) {
     parse_ptr += n;
     return ans;
 }
-		`, "parse_generator_controller");
-		</script>
-		
-		<p>
-		So the general flow for parsing one rule is:
-		</p>
-		
-		<div id="parse_generator_flow"></div>
-		<script>
-		insertCodeBlock(`
+        `, "parse_generator_controller");
+        </script>
+        
+        <p>
+        So the general flow for parsing one rule is:
+        </p>
+        
+        <div id="parse_generator_flow"></div>
+        <script>
+        insertCodeBlock(`
 rule* parse_rule() {
-	push_stack();		//save parse context so we know where to backtrack to
-	
-	// do parsing
-	
-	if(is_valid) {
-		rm_stack(); 	//successful parse, can remove saved context
-		return new rule();
-	}
-	
-	pop_stack();		//unsuccessful parse, backtrack to original parse context
-	return nullptr;
+    push_stack();        //save parse context so we know where to backtrack to
+    
+    // do parsing
+    
+    if(is_valid) {
+        rm_stack();     //successful parse, can remove saved context
+        return new rule();
+    }
+    
+    pop_stack();        //unsuccessful parse, backtrack to original parse context
+    return nullptr;
 }
-		`, "parse_generator_flow");
-		</script>
-		
-		<p>
-		For example, here is what parsing a terminal looks like:
-		</p>
-		
-		<div id="parse_generator_terminal"></div>
-		<script>
-		insertCodeBlock(`
+        `, "parse_generator_flow");
+        </script>
+        
+        <p>
+        For example, here is what parsing a terminal looks like:
+        </p>
+        
+        <div id="parse_generator_terminal"></div>
+        <script>
+        insertCodeBlock(`
 terminal* parse_terminal() {
     push_stack();
     if(next_char() != '\\"') {
@@ -330,18 +335,18 @@ terminal* parse_terminal() {
     rm_stack();
     return new terminal(cs);
 }
-		`, "parse_generator_terminal");
-		</script>
-		
-		<p>
-		After we can properly parse the EBNF grammar, we then need to perform some semantic checks on it to make sure it's well formed. 
-		I just check for double defined identifiers and identifiers that are used, but not defined in a rule. You could further extend this
-		by also checking for non-terminal rules, left-recursive rules, dead alternations, and so on. 
-		</p>
-		
-		<div id="parse_generator_semantic_checks"></div>
-		<script>
-		insertCodeBlock(`
+        `, "parse_generator_terminal");
+        </script>
+        
+        <p>
+        After we can properly parse the EBNF grammar, we then need to perform some semantic checks on it to make sure it's well formed. 
+        I just check for double defined identifiers and identifiers that are used, but not defined in a rule. You could further extend this
+        by also checking for non-terminal rules, left-recursive rules, dead alternations, and so on. 
+        </p>
+        
+        <div id="parse_generator_semantic_checks"></div>
+        <script>
+        insertCodeBlock(`
 bool do_semantic_checks(grammar *g) {
     // - are there identifiers that are defined twice
     set<string> defined_identifiers;
@@ -440,41 +445,41 @@ bool do_semantic_checks(grammar *g) {
 
     return true;
 }
-		`, "parse_generator_semantic_checks");
-		</script>
-		
-		<p>
-		Finally, we need to autogenerate parsing code from the grammar we just parsed. There are two parts to this, I'll need to generate the struct 
-		definitions for the objects I'm going to be producing, and the parse functions to actually produce those structs. First, the struct definitions,
-		I generate them according to these rules:
-		</p>
-		
-		<ul>
-			<li> Each rule / grouping will get a struct. </li>
-			<li> Concatenations will produce structs that house all the terms in order. </li>
-			<li> Alternations will produce disambiguation structs, unless the alternation only has one term in which case it will degenerate to the struct of the only term. </li>
-			<li> Terminals will turn into a special predefined <code>terminal</code> struct. </li>
-			<li> Fields within a struct will be named <code>"t" + (field index)</code>. </li>
-			<li> For alternation structs, will also generate <code>bool is_t + (field index)</code> fields for disambiguation. Exactly one of these should be true. </li>
-			<li> If a struct contains a field of type <code>{}</code> or <code><></code>, <code>std::vector</code> will be used to house multiple copies of the internal struct. </li>
-			<li> If a struct contains a field of type <code>[]</code>, <code>std::optional</code> will be used to house the internal struct. </li>
-		</ul>
-		
-		<p>
-		Let's look at an example:
-		</p>
-		
-		<pre><code>
+        `, "parse_generator_semantic_checks");
+        </script>
+        
+        <p>
+        Finally, we need to autogenerate parsing code from the grammar we just parsed. There are two parts to this, I'll need to generate the struct 
+        definitions for the objects I'm going to be producing, and the parse functions to actually produce those structs. First, the struct definitions,
+        I generate them according to these rules:
+        </p>
+        
+        <ul>
+            <li> Each rule / grouping will get a struct. </li>
+            <li> Concatenations will produce structs that house all the terms in order. </li>
+            <li> Alternations will produce disambiguation structs, unless the alternation only has one term in which case it will degenerate to the struct of the only term. </li>
+            <li> Terminals will turn into a special predefined <code>terminal</code> struct. </li>
+            <li> Fields within a struct will be named <code>"t" + (field index)</code>. </li>
+            <li> For alternation structs, will also generate <code>bool is_t + (field index)</code> fields for disambiguation. Exactly one of these should be true. </li>
+            <li> If a struct contains a field of type <code>{}</code> or <code><></code>, <code>std::vector</code> will be used to house multiple copies of the internal struct. </li>
+            <li> If a struct contains a field of type <code>[]</code>, <code>std::optional</code> will be used to house the internal struct. </li>
+        </ul>
+        
+        <p>
+        Let's look at an example:
+        </p>
+        
+        <pre><code>
 concatenation = term , { rws , "," , rws , term } ;
-		</pre></code>
-		
-		<p>
-		gets turned into
-		</p>
-		
-		<div id="parse_generator_struct_result"></div>
-		<script>
-		insertCodeBlock(`
+        </pre></code>
+        
+        <p>
+        gets turned into
+        </p>
+        
+        <div id="parse_generator_struct_result"></div>
+        <script>
+        insertCodeBlock(`
 struct concatenation : public token {
     struct a0 : public token {
         rws *t0;
@@ -501,17 +506,17 @@ struct concatenation : public token {
     string to_string() override;
     void postprocess() override;
 };
-		`, "parse_generator_struct_result");
-		</script>
-		
-		<p>
-		Note that all my structs also inherit from <code>token</code>. This is just a wrapper that keeps track of some information like where each token starts, how long it is, 
-		what line and column they started on and so on. They aren't needed for compilation, but are very nice for syntax highlighting and error messages. 
-		</p>
-		
-		<div id="parse_generator_token"></div>
-		<script>
-		insertCodeBlock(`
+        `, "parse_generator_struct_result");
+        </script>
+        
+        <p>
+        Note that all my structs also inherit from <code>token</code>. This is just a wrapper that keeps track of some information like where each token starts, how long it is, 
+        what line and column they started on and so on. They aren't needed for compilation, but are very nice for syntax highlighting and error messages. 
+        </p>
+        
+        <div id="parse_generator_token"></div>
+        <script>
+        insertCodeBlock(`
 struct token {
     // set during parse phase
     parse_context start_ctx;
@@ -524,28 +529,28 @@ struct token {
     virtual void postprocess() = 0;
     virtual std::string to_string() = 0;
 };
-		`, "parse_generator_token");
-		</script>
-		
-		<p>
-		Now, we just need to generate the static parse functions. Like the struct definitions, I also generate these according to some rules:
-		</p>
-		
-		<ul>
-			<li> Parse functions will return a struct pointer on success and <code>nullptr</code> on failure. </li>
-			<li> Parse functions should only reference the parse functions of root level structs and structs of depth + 1. </li>
-			<li> The parse context is saved at the start of every parse function via <code>push_stack()</code>. </li>
-			<li> If the parse fails, the parse context is restored via <code>pop_stack()</code>. </li>
-			<li> If the parse succeeds, the saved parse context is discarded via <code>rm_stack()</code> and the output is built. </li>
-		</ul>
-		
-		<p>
-		Here are the autogenerated parse functions for the <code>concatenation</code> rule:
-		</p>
-		
-		<div id="parse_generator_parse_result"></div>
-		<script>
-		insertCodeBlock(`
+        `, "parse_generator_token");
+        </script>
+        
+        <p>
+        Now, we just need to generate the static parse functions. Like the struct definitions, I also generate these according to some rules:
+        </p>
+        
+        <ul>
+            <li> Parse functions will return a struct pointer on success and <code>nullptr</code> on failure. </li>
+            <li> Parse functions should only reference the parse functions of root level structs and structs of depth + 1. </li>
+            <li> The parse context is saved at the start of every parse function via <code>push_stack()</code>. </li>
+            <li> If the parse fails, the parse context is restored via <code>pop_stack()</code>. </li>
+            <li> If the parse succeeds, the saved parse context is discarded via <code>rm_stack()</code> and the output is built. </li>
+        </ul>
+        
+        <p>
+        Here are the autogenerated parse functions for the <code>concatenation</code> rule:
+        </p>
+        
+        <div id="parse_generator_parse_result"></div>
+        <script>
+        insertCodeBlock(`
 concatenation::a0* concatenation::a0::parse() {
     parse_context _start_ctx = get_ctx();
     push_stack();
@@ -563,7 +568,7 @@ concatenation::a0* concatenation::a0::parse() {
     retval->end_ctx = get_ctx();
     return retval;
 }
-		
+        
 concatenation* concatenation::parse() {
     parse_context _start_ctx = get_ctx();
     push_stack();
@@ -580,62 +585,62 @@ concatenation* concatenation::parse() {
     retval->start_ctx = _start_ctx;
     retval->end_ctx = get_ctx();
     return retval;
-}		
-		`, "parse_generator_parse_result");
-		</script>
-		
-		<p>
-		Then all you need to do to use this is just include the generated <code>parser.h</code> as a header file, feed it the string to parse, and call the parse
-		function of your chosen root rule. I would say writing a parse generator is extremely worthwhile, as I've had to change my grammar many times and
-		this script made it so that I never had to worry about the correctness of my parser. And if you want to later extend your parser to give syntax 
-		errors or be error-tolerant, you can do so relatively easily. 
-		</p>
-		
-		<h2>Semantic Analysis</h2>
-		<p>
-		Once we have our CST generated, turning it into an AST is relatively trivial, you just do a tree walk and only take out the stuff you need. 
-		The hard part is stripping away all the syntactic sugar and doing semantic checks until you have an AST that is completely desugared and
-		verified to be semantically correct, ready to generate assembly. 
-		</p>
-		
-		<h3>Overview</h3>
-		<p>
-		Let's go through an example to illustrate what exactly the semantic analysis phase needs to do. Consider this code snippet:
-		</p>
-		
-		<pre><code>
+}        
+        `, "parse_generator_parse_result");
+        </script>
+        
+        <p>
+        Then all you need to do to use this is just include the generated <code>parser.h</code> as a header file, feed it the string to parse, and call the parse
+        function of your chosen root rule. I would say writing a parse generator is extremely worthwhile, as I've had to change my grammar many times and
+        this script made it so that I never had to worry about the correctness of my parser. And if you want to later extend your parser to give syntax 
+        errors or be error-tolerant, you can do so relatively easily. 
+        </p>
+        
+        <h2 id="semantic_analysis">Semantic Analysis</h2>
+        <p>
+        Once we have our CST generated, turning it into an AST is relatively trivial, you just do a tree walk and only take out the stuff you need. 
+        The hard part is stripping away all the syntactic sugar and doing semantic checks until you have an AST that is completely desugared and
+        verified to be semantically correct, ready to generate assembly. 
+        </p>
+        
+        <h3>Overview</h3>
+        <p>
+        Let's go through an example to illustrate what exactly the semantic analysis phase needs to do. Consider this code snippet:
+        </p>
+        
+        <pre><code>
 {
     i32 x = 'a';
     u64 y = 10;
 }
 u8* z = w + y;
-		</code></pre>
-		
-		<p>
-		To the parser, this is well formed. However, as jank does not support automatic typecasting, what the program is trying to do does not make sense. 
-		In the second line, we are declaring a 32-bit integer <code>x</code> and assigning it a value of <code>'a'</code>. In jank, this is a unsigned 8-bit 
-		integer literal, or a <code>u8</code>, so this declaration operation should not be accepted as valid code. Similar mistakes are made in the following lines
-		such as in the third line where we are trying to assign a <code>i32</code> to a <code>u64</code> (decimal integer literals are all <code>i32</code>s), 
-		or in the fifth line where <code>y</code> has gone out of scope and <code>w</code> does not exist. 
-		</p>
-		
-		<p>
-		So how exactly can the semantic analysis phase accomplish all this? First, local expression resolution makes sure that each piece of syntax has a well 
-		defined type and meaning. Then, global control flow ties those expressions all together, enforcing local variable lifetimes, and high level flow
-		semantics. It's worth noting that in my compiler if I find a semantic error, I bail immediately instead of continuing on to generate more diagnostic
-		data. 
-		</p>
-		
-		<h3>Expression Resolution</h3>
-		<p>
-		In jank, if you need to ever compute a value or call a function, or pretty much do anything other than high level control statements such as
-		conditionals, loops, or inline assembly, it gets parsed as an expression. Expressions in jank follow C-style operator precedence and are defined
-		by the following grammar:
-		</p>
-		
-		<div id="expression_resolution_grammar"></div>
-		<script>
-		insertCodeBlock(`
+        </code></pre>
+        
+        <p>
+        To the parser, this is well formed. However, as jank does not support automatic typecasting, what the program is trying to do does not make sense. 
+        In the second line, we are declaring a 32-bit integer <code>x</code> and assigning it a value of <code>'a'</code>. In jank, this is a unsigned 8-bit 
+        integer literal, or a <code>u8</code>, so this declaration operation should not be accepted as valid code. Similar mistakes are made in the following lines
+        such as in the third line where we are trying to assign a <code>i32</code> to a <code>u64</code> (decimal integer literals are all <code>i32</code>s), 
+        or in the fifth line where <code>y</code> has gone out of scope and <code>w</code> does not exist. 
+        </p>
+        
+        <p>
+        So how exactly can the semantic analysis phase accomplish all this? First, local expression resolution makes sure that each piece of syntax has a well 
+        defined type and meaning. Then, global control flow ties those expressions all together, enforcing local variable lifetimes, and high level flow
+        semantics. It's worth noting that in my compiler if I find a semantic error, I bail immediately instead of continuing on to generate more diagnostic
+        data. 
+        </p>
+        
+        <h3>Expression Resolution</h3>
+        <p>
+        In jank, if you need to ever compute a value or call a function, or pretty much do anything other than high level control statements such as
+        conditionals, loops, or inline assembly, it gets parsed as an expression. Expressions in jank follow C-style operator precedence and are defined
+        by the following grammar:
+        </p>
+        
+        <div id="expression_resolution_grammar"></div>
+        <script>
+        insertCodeBlock(`
 expr_primary = literal | constructor_call | function_call | identifier | "(" , ows , expression , ows , ")" ;
 expr_postfix = expr_primary , { ows , ( "[" , ows , expression , ows , "]" | "." , ows , function_call | "->" , ows , function_call | "." , ows , identifier | "->" , ows , identifier | "++" | "--" | "#(" , argument_list , ")" | "." , ows , "~()" | "->" , ows , "~()" ) } ;
 expr_unary = ( "++" | "--" | "+" | "-" | "~" | "!" | "*" | "@" | "$" , type ) , ows , expr_unary | expr_postfix ;
@@ -651,67 +656,67 @@ expr_logical_and = expr_bit_or , { ows , "&&" , ows , expr_bit_or } ;
 expr_logical_or = expr_logical_and , { ows , "||" , ows , expr_logical_and } ;
 expr_assignment = expr_logical_or , { ows , ( "=" | "+=" | "-=" | "*=" | "/=" | "%=" | "<<=" | ">>=" | "&=" | "^=" | "|=" | ":=" ) , ows , expr_logical_or } ;
 expression = expr_assignment ;
-		`, "expression_resolution_grammar");
-		</script>
-		
-		<p>
-		So for example, an expression like this
-		</p>
-		
-		<pre><code class="language-none">
+        `, "expression_resolution_grammar");
+        </script>
+        
+        <p>
+        So for example, an expression like this
+        </p>
+        
+        <pre><code class="language-none">
 $u64 (x - 2) * (y + z) + 0x10
-		</code></pre>
-		
-		<p>
-		gets automatically turned into an expression tree by the parser, so operator precedence is enforced by the parser. 
-		</p>
-		
-		<!-- show image of expression tree -->
-		<figure>
-			<img src="expression_parse_tree.png" width="20%">
-		</figure>
-		
-		<p>
-		So now, all we need to do is walk the expression tree, and ensure that all primary (leaf) nodes and operator nodes are well defined. 
-		By well defined, I mean that we just need to know the resulting type of each expression subtree as it's the types that determine what 
-		operations get performed. 
-		</p>
-		
-		<h4>Primary Nodes</h4>
-		<p>
-		Primary nodes consist of literals, constructor calls, function calls, and identifiers. Literals are easy to resolve, and often you can
-		force semantic correctness of literals just through syntax. In jank, I support integer, hex, binary, string, and character literals, 
-		which resolve to types <code>i32</code>, <code>u64</code>, <code>u64</code>, <code>u8*</code>, and <code>u8</code> respectively. 
-		</p>
-		
-		<p>
-		Function and constructor calls are resolved very similarly to each other. When the user writes a function, lets say <code>i32 foo(i32 x)</code>, 
-		we store it into a global list of functions, which are differentiated by their 'function signature'. It is pretty much the function identifier 
-		and the ordered list of argument types, so the function signature of the aforementioned function is <code>foo(i32)</code>. We don't have the return
-		type as part of the function signature as that is not specified in the function call. Then to resolve a function call, we just need to generate
-		the function signature that it matches to by resolving the types of all its argument expressions, and look through the list of globally declared
-		functions to find a matching signature. For example, <code>foo(1 + 2)</code> will match to the function with signature <code>foo(i32)</code>
-		and the function call will resolve to type <code>i32</code>. Constructors are just functions with an implicit return type, but other than that
-		they are handled in exactly the same way. There are of course more complications than that with function call resolution which will be covered in the
-		templating section. 
-		</p>
-		
-		<p>
-		Finally, identifiers are just references to existing local and global variables. Since all variable identifiers that are simultaneously 
-		active are guaranteed to be unique, we can just search the current variable list and find the type of the referenced variable. 
-		</p>
-		
-		<h4>Operator Nodes</h4>
-		<p>
-		Operators are kind of like special functions that take in one or two sub-expressions and combine their results to somehow produce 
-		a new result of an arbitrary type. In my compiler there are two types of operators: builtin and overloaded operators. Builtin operators
-		are exactly what they sound like, when I start up semantic analysis, I populate the global operator list with a bunch of hardcoded 
-		arithmetic operators for integer types of various bit widths and signednesses. Then, during the function gathering pass, I also gather
-		any operator overloads declared by the user. The syntax for overloads in jank is very similar to C++, however in jank, all overloads 
-		are declared in the global context. 
-		</p>
-		
-		<pre><code>
+        </code></pre>
+        
+        <p>
+        gets automatically turned into an expression tree by the parser, so operator precedence is enforced by the parser. 
+        </p>
+        
+        <!-- show image of expression tree -->
+        <figure>
+            <img src="expression_parse_tree.png" width="20%">
+        </figure>
+        
+        <p>
+        So now, all we need to do is walk the expression tree, and ensure that all primary (leaf) nodes and operator nodes are well defined. 
+        By well defined, I mean that we just need to know the resulting type of each expression subtree as it's the types that determine what 
+        operations get performed. 
+        </p>
+        
+        <h4>Primary Nodes</h4>
+        <p>
+        Primary nodes consist of literals, constructor calls, function calls, and identifiers. Literals are easy to resolve, and often you can
+        force semantic correctness of literals just through syntax. In jank, I support integer, hex, binary, string, and character literals, 
+        which resolve to types <code>i32</code>, <code>u64</code>, <code>u64</code>, <code>u8*</code>, and <code>u8</code> respectively. 
+        </p>
+        
+        <p>
+        Function and constructor calls are resolved very similarly to each other. When the user writes a function, lets say <code>i32 foo(i32 x)</code>, 
+        we store it into a global list of functions, which are differentiated by their 'function signature'. It is pretty much the function identifier 
+        and the ordered list of argument types, so the function signature of the aforementioned function is <code>foo(i32)</code>. We don't have the return
+        type as part of the function signature as that is not specified in the function call. Then to resolve a function call, we just need to generate
+        the function signature that it matches to by resolving the types of all its argument expressions, and look through the list of globally declared
+        functions to find a matching signature. For example, <code>foo(1 + 2)</code> will match to the function with signature <code>foo(i32)</code>
+        and the function call will resolve to type <code>i32</code>. Constructors are just functions with an implicit return type, but other than that
+        they are handled in exactly the same way. There are of course more complications than that with function call resolution which will be covered in the
+        templating section. 
+        </p>
+        
+        <p>
+        Finally, identifiers are just references to existing local and global variables. Since all variable identifiers that are simultaneously 
+        active are guaranteed to be unique, we can just search the current variable list and find the type of the referenced variable. 
+        </p>
+        
+        <h4>Operator Nodes</h4>
+        <p>
+        Operators are kind of like special functions that take in one or two sub-expressions and combine their results to somehow produce 
+        a new result of an arbitrary type. In my compiler there are two types of operators: builtin and overloaded operators. Builtin operators
+        are exactly what they sound like, when I start up semantic analysis, I populate the global operator list with a bunch of hardcoded 
+        arithmetic operators for integer types of various bit widths and signednesses. Then, during the function gathering pass, I also gather
+        any operator overloads declared by the user. The syntax for overloads in jank is very similar to C++, however in jank, all overloads 
+        are declared in the global context. 
+        </p>
+        
+        <pre><code>
 struct A {
     i32 foo;
     A(i32 _foo) {
@@ -724,83 +729,83 @@ A operator+(A x, A y) {
 }
 
 i32 main() {
-	
-	A x = new A(5);
-	A y = new A(10);
-	A z = x + y;		//z.foo = 15
-	
-	return 0;
+    
+    A x = new A(5);
+    A y = new A(10);
+    A z = x + y;        //z.foo = 15
+    
+    return 0;
 }
-		</code></pre>
-		
-		<p>
-		Operators are resolved very much like functions are, I keep a global list of operators and search it using an 'operator signature' when I need one. 
-		Of course, there are some operators that have special default behaviours and some that don't appear in the global operator list. 
-		For example, the default assignment operator will only assign on exactly matched types, dereferencing and indexing only work on pointer types, 
-		and member variable and function access require that the type be a user defined struct, but we'll get to that later. 
-		</p>
-		
-		<p>
-		Finally, if an operator gets replaced by a user defined overload, then I replace it with a primary node that is just a function call to the
-		user defined operator. This is done in the 'elaboration' phase after I'm done doing semantic checks on the expression. 
-		</p>
-		
-		<h4>L-Values And R-Values</h4>
-		<p>
-		Now that we know how to propagate types, it's important that we also make a distinction between addressable values (l-values) and temporary values (r-values).
-		This distinction is important to make in order to support a few features:
-		</p>
-		
-		<ul>
-			<li> The assignment operator requires an l-value on the left hand side to work. </li>
-			<li> The referencing operator <code>@</code> returns the memory address of a variable. It can only work on l-values. </li>
-			<li> Reference variables must be initialized with an l-value to establish a binding. </li>
-			<li> When calling a function with a reference type parameter <code>T&</code>, you need to give it an l-value. </li>
-			<li> The increment / decrement operators (<code>++</code>, <code>--</code>) require l-values as they modify the underlying element in place. </li>
-		</ul>
-		
-		<p>
-		and so on. So how do we actually propogate these? It actually isn't too hard, the rule pretty much is that if you're doing a memory access, the result
-		should be an l-value. For example, an array access, struct member variable access, or pointer dereference should return an l-value.  
-		The one big exception is with reference types, if a primary node returns a reference type, degenerate it into a normal
-		type but make it into a l-value. If you think about it, reference types are pretty much implicit memory accesses, so it makes sense. 
-		</p>
-		
-		<h3>Scopes And Control Flow</h3>
-		<p>
-		Ok, now we know how to check if a single expression is semantically well formed, given that we know the global state up to that point. 
-		The next step is to handle high level control statements. 
-		These statements require us to update the global execution state, since expression resolution depends on the evolving context established
-		by variables, scopes, and control flow. 
-		</p>
-		
-		<h4>Scopes</h4>
-		<p>
-		When a variable is declared, we first need to check if the expression attached to the declaration is well formed, and that the resulting type
-		of the expression matches the variable type, and that the variable identifier doesn't already exist. Then, when we resolve future expressions,
-		they can reference the newly added variable from the global variable list. 
-		</p>
-		
-		<pre><code>
-i32 a = x;	                //invalid, x has not been declared yet
+        </code></pre>
+        
+        <p>
+        Operators are resolved very much like functions are, I keep a global list of operators and search it using an 'operator signature' when I need one. 
+        Of course, there are some operators that have special default behaviours and some that don't appear in the global operator list. 
+        For example, the default assignment operator will only assign on exactly matched types, dereferencing and indexing only work on pointer types, 
+        and member variable and function access require that the type be a user defined struct, but we'll get to that later. 
+        </p>
+        
+        <p>
+        Finally, if an operator gets replaced by a user defined overload, then I replace it with a primary node that is just a function call to the
+        user defined operator. This is done in the 'elaboration' phase after I'm done doing semantic checks on the expression. 
+        </p>
+        
+        <h4>L-Values And R-Values</h4>
+        <p>
+        Now that we know how to propagate types, it's important that we also make a distinction between addressable values (l-values) and temporary values (r-values).
+        This distinction is important to make in order to support a few features:
+        </p>
+        
+        <ul>
+            <li> The assignment operator requires an l-value on the left hand side to work. </li>
+            <li> The referencing operator <code>@</code> returns the memory address of a variable. It can only work on l-values. </li>
+            <li> Reference variables must be initialized with an l-value to establish a binding. </li>
+            <li> When calling a function with a reference type parameter <code>T&</code>, you need to give it an l-value. </li>
+            <li> The increment / decrement operators (<code>++</code>, <code>--</code>) require l-values as they modify the underlying element in place. </li>
+        </ul>
+        
+        <p>
+        and so on. So how do we actually propogate these? It actually isn't too hard, the rule pretty much is that if you're doing a memory access, the result
+        should be an l-value. For example, an array access, struct member variable access, or pointer dereference should return an l-value.  
+        The one big exception is with reference types, if a primary node returns a reference type, degenerate it into a normal
+        type but make it into a l-value. If you think about it, reference types are pretty much implicit memory accesses, so it makes sense. 
+        </p>
+        
+        <h3>Scopes And Control Flow</h3>
+        <p>
+        Ok, now we know how to check if a single expression is semantically well formed, given that we know the global state up to that point. 
+        The next step is to handle high level control statements. 
+        These statements require us to update the global execution state, since expression resolution depends on the evolving context established
+        by variables, scopes, and control flow. 
+        </p>
+        
+        <h4>Scopes</h4>
+        <p>
+        When a variable is declared, we first need to check if the expression attached to the declaration is well formed, and that the resulting type
+        of the expression matches the variable type, and that the variable identifier doesn't already exist. Then, when we resolve future expressions,
+        they can reference the newly added variable from the global variable list. 
+        </p>
+        
+        <pre><code>
+i32 a = x;                    //invalid, x has not been declared yet
 i32 x = 10;
-i32 y = x + 0x5;	        //invalid, cannot directly add i32 and u64
+i32 y = x + 0x5;            //invalid, cannot directly add i32 and u64
 i32 b = x + 30;
-u64 b = $u64 x + 0x300; 	//invalid, b already exists
-i32 c = $u64 (x + b * 2);	//invalid, cannot assign u64 to i32
-		</pre></code>
-		
-		<p>
-		If a variable is declared within a block, it should only be valid within that block. To enforce this, when I enter a block, I push a new frame
-		to the globally maintained 'declaration stack' and when I exit, I pop the top frame off and remove all the variables in the top frame. 
-		Then, whenever a new variable is declared, I just need to put it into the top frame of the declaration stack. 
-		</p>
-		
-		<div id="declaration_stack"></div>
-		<script>
-		insertCodeBlock(`
+u64 b = $u64 x + 0x300;     //invalid, b already exists
+i32 c = $u64 (x + b * 2);    //invalid, cannot assign u64 to i32
+        </pre></code>
+        
+        <p>
+        If a variable is declared within a block, it should only be valid within that block. To enforce this, when I enter a block, I push a new frame
+        to the globally maintained 'declaration stack' and when I exit, I pop the top frame off and remove all the variables in the top frame. 
+        Then, whenever a new variable is declared, I just need to put it into the top frame of the declaration stack. 
+        </p>
+        
+        <div id="declaration_stack"></div>
+        <script>
+        insertCodeBlock(`
 std::stack<std::vector<Variable*>> declaration_stack;
-		
+        
 void push_declaration_stack() {
     declaration_stack.push_back(std::vector<Variable*>(0));
 }
@@ -849,18 +854,18 @@ Variable* add_variable(Type *t, Identifier *id, bool is_global, bool is_extern) 
     if(!is_global) declaration_stack.rbegin()->push_back(v);
     return v;
 }
-		`, "declaration_stack");
-		</script>
-		
-		<p>
-		Note that I don't put global variables into the declaration stack as they should exist everywhere. 
-		Also, implicit scopes should be inserted into for loops, while loops, and each branch of if statements, not just compound statements. 
-		Actually, for loops should have two implicit scopes, one specifically for its iterator variable that should be alive across all iterations, and
-		an inner scope that gets reset every iteration. 
-		So for example, this should be valid code:
-		</p>
-		
-		<pre><code>
+        `, "declaration_stack");
+        </script>
+        
+        <p>
+        Note that I don't put global variables into the declaration stack as they should exist everywhere. 
+        Also, implicit scopes should be inserted into for loops, while loops, and each branch of if statements, not just compound statements. 
+        Actually, for loops should have two implicit scopes, one specifically for its iterator variable that should be alive across all iterations, and
+        an inner scope that gets reset every iteration. 
+        So for example, this should be valid code:
+        </p>
+        
+        <pre><code>
 {
     if(1) i32 x = 0;
     else if(1 == 0) i32 x = 0;
@@ -880,24 +885,24 @@ Variable* add_variable(Type *t, Identifier *id, bool is_global, bool is_extern) 
     i32 x = 5;
     cout << x << "\n";
 }
-		</code></pre>
-		
-		<h4>Control Flow</h4>
-		<p>
-		Checking the validity of control statements such as if, for, and while are relatively easy, it's just combining what we've already done. For example, the
-		expression in the while statement must resolve to a type, and that type must be castable to <code>i32</code> which is jank's truth type. 
-		The tricky parts come when we want to do some more advanced control flow such as break, continue, and return statements. 
-		</p>
-		
-		<p>
-		For break and continue statements, we just need to make sure that they're contained by a loop. To do this, I keep a 'loop context' stack 
-		and for a break or continue statement to be valid, the loop context stack just has to not be empty. It also is useful for codegen as I can easily
-		extract the enclosing loop by looking at the top of the loop stack.
-		</p>
-		
-		<div id="loop_stack"></div>
-		<script>
-		insertCodeBlock(`
+        </code></pre>
+        
+        <h4>Control Flow</h4>
+        <p>
+        Checking the validity of control statements such as if, for, and while are relatively easy, it's just combining what we've already done. For example, the
+        expression in the while statement must resolve to a type, and that type must be castable to <code>i32</code> which is jank's truth type. 
+        The tricky parts come when we want to do some more advanced control flow such as break, continue, and return statements. 
+        </p>
+        
+        <p>
+        For break and continue statements, we just need to make sure that they're contained by a loop. To do this, I keep a 'loop context' stack 
+        and for a break or continue statement to be valid, the loop context stack just has to not be empty. It also is useful for codegen as I can easily
+        extract the enclosing loop by looking at the top of the loop stack.
+        </p>
+        
+        <div id="loop_stack"></div>
+        <script>
+        insertCodeBlock(`
 void push_loop_stack(std::string start_label, std::string assignment_label, std::string end_label) {
     assert(declaration_stack.size() != 0);
     int declaration_layer = declaration_stack.size() - 1;
@@ -913,21 +918,21 @@ void pop_loop_stack(std::string start_label, std::string assignment_label, std::
     assert(lc->assignment_label == assignment_label);
     assert(lc->end_label == end_label);
 }
-		`, "loop_stack");
-		</script>
-		
-		<p>
-		How we enforce return statements depends on the return type of the enclosing function. If the function returns <code>void</code>, then we shouldn't require a
-		return statement at all, and the user can use a return statement without an expression to bail early. In this case, we should also insert an implicit return 
-		statement at the very end of the function. 
-		
-		However if the enclosing function has a return type, then we need to enforce that the function is always returning. 
-		This means that through any control flow, we need to make sure that we eventually hit a return statement. I implement this via <code>is_always_returning()</code>. 
-		</p>
-		
-		<div id="is_always_returning"></div>
-		<script>
-		insertCodeBlock(`
+        `, "loop_stack");
+        </script>
+        
+        <p>
+        How we enforce return statements depends on the return type of the enclosing function. If the function returns <code>void</code>, then we shouldn't require a
+        return statement at all, and the user can use a return statement without an expression to bail early. In this case, we should also insert an implicit return 
+        statement at the very end of the function. 
+        
+        However if the enclosing function has a return type, then we need to enforce that the function is always returning. 
+        This means that through any control flow, we need to make sure that we eventually hit a return statement. I implement this via <code>is_always_returning()</code>. 
+        </p>
+        
+        <div id="is_always_returning"></div>
+        <script>
+        insertCodeBlock(`
 bool ReturnStatement::is_always_returning() {
     //by definition
     return true;
@@ -936,22 +941,22 @@ bool ReturnStatement::is_always_returning() {
 bool IfStatement::is_always_returning() {
     //if we don't have else, then we're not guaranteed to go into any branch
     if(!else_statement.has_value()) return false;
-	
+    
     //every statement must return 
     for(int i = 0; i < statements.size(); i++){
         if(!statements[i]->is_always_returning()) return false;
     }
     if(!else_statement.value()->is_always_returning()) return false;
-	
+    
     return true;
 }
 
 bool WhileStatement::is_always_returning() {
-    return false;	//TODO need to check if we actually enter the loop
+    return false;    //TODO need to check if we actually enter the loop
 }
 
 bool ForStatement::is_always_returning() {
-    return false;	//TODO need to check if we actually enter the loop
+    return false;    //TODO need to check if we actually enter the loop
 }
 
 bool CompoundStatement::is_always_returning() {
@@ -966,36 +971,36 @@ bool CompoundStatement::is_always_returning() {
     }
     return false;
 }
-		`, "is_always_returning");
-		</script>
-		
-		<h3>Structs</h3>
-		<p>
-		Structs allow you to group multiple related fields into one type. They can hold multiple named fields, each with its own type, enabling the
-		construction of reusable containers and datastructures. For the most part, structs can already fit within our current semantic analysis framework, 
-		however we'll have to think about struct memory layout generation and constructor/destructor semantics. 
-		</p>
-		
-		<h4>Struct Layout Generation</h4>
-		<p>
-		For a struct to be semantically valid, we need to be able to generate the layout of its member variables in memory. 
-		For example, consider the following struct definition:
-		</p>
-		
-		<pre><code>
+        `, "is_always_returning");
+        </script>
+        
+        <h3>Structs</h3>
+        <p>
+        Structs allow you to group multiple related fields into one type. They can hold multiple named fields, each with its own type, enabling the
+        construction of reusable containers and datastructures. For the most part, structs can already fit within our current semantic analysis framework, 
+        however we'll have to think about struct memory layout generation and constructor/destructor semantics. 
+        </p>
+        
+        <h4>Struct Layout Generation</h4>
+        <p>
+        For a struct to be semantically valid, we need to be able to generate the layout of its member variables in memory. 
+        For example, consider the following struct definition:
+        </p>
+        
+        <pre><code>
 struct A {
     i32 foo;
     u64 bar;
 }
-		</code></pre>
-		
-		<p>
-		<code>foo</code> should be located at an offset of 0 bytes and <code>bar</code> should be located at an offset of 4 bytes. 
-		We can also have structs themselves as member variables, in which case the memory layout of the member variable struct should be directly
-		inserted into the parent struct.
-		</p>
-		
-		<pre><code>
+        </code></pre>
+        
+        <p>
+        <code>foo</code> should be located at an offset of 0 bytes and <code>bar</code> should be located at an offset of 4 bytes. 
+        We can also have structs themselves as member variables, in which case the memory layout of the member variable struct should be directly
+        inserted into the parent struct.
+        </p>
+        
+        <pre><code>
 struct B {
     i32 foo;
     A bar;
@@ -1007,37 +1012,37 @@ struct B {
     i32 A_foo;
     u64 A_bar;
 }
-		</code></pre>
-		
-		<p>
-		However for some structs, it's impossible to generate a (finite size) memory layout, for example:
-		</p>
-		
-		<pre><code>
+        </code></pre>
+        
+        <p>
+        However for some structs, it's impossible to generate a (finite size) memory layout, for example:
+        </p>
+        
+        <pre><code>
 struct T {
     i32 foo;
     T bar;
 }
-		</code></pre>
-		
-		<p>
-		In this case, since <code>T</code> depends on itself, the amount of memory required for a struct of type <code>T</code> is infinite. 
-		Actually, other than making sure that all the member variable types exist, whether or not the struct definition is self referential is 
-		the only other thing you need to check for to make sure you're able to generate a struct layout (for now). 
-		</p>
-		
-		<h4>Constructor / Destructor Semantics</h4>
-		<p>
-		In jank, all structs are required to have a default constructor, a copy constructor, and a destructor. The default and copy constructors
-		are identified based on their function signatures, while the destructor has some special syntax. 
-		</p>
-		
-		<pre><code>
+        </code></pre>
+        
+        <p>
+        In this case, since <code>T</code> depends on itself, the amount of memory required for a struct of type <code>T</code> is infinite. 
+        Actually, other than making sure that all the member variable types exist, whether or not the struct definition is self referential is 
+        the only other thing you need to check for to make sure you're able to generate a struct layout (for now). 
+        </p>
+        
+        <h4>Constructor / Destructor Semantics</h4>
+        <p>
+        In jank, all structs are required to have a default constructor, a copy constructor, and a destructor. The default and copy constructors
+        are identified based on their function signatures, while the destructor has some special syntax. 
+        </p>
+        
+        <pre><code>
 struct string {
     u64 cap;
     u64 sz;
     u8* arr;
-	
+    
     //default constructor
     string() {                 
         this.cap = $u64 1;
@@ -1066,16 +1071,16 @@ struct string {
         free($void* this.arr, this.cap);
     }
 }
-		</code></pre>
-		
-		<p>
-		If the user doesn't specify a default constructor, copy constructor, or destructor, the compiler automatically generates them 
-		by emitting some custom AST nodes. 
-		</p>
-		
-		<div id="autogenerated_constructor_destructor"></div>
-		<script>
-		insertCodeBlock(`
+        </code></pre>
+        
+        <p>
+        If the user doesn't specify a default constructor, copy constructor, or destructor, the compiler automatically generates them 
+        by emitting some custom AST nodes. 
+        </p>
+        
+        <div id="autogenerated_constructor_destructor"></div>
+        <script>
+        insertCodeBlock(`
 //default default constructor
 add_constructor(new StructConstructor(t->make_copy(), {}, new CompoundStatement({})));
 
@@ -1113,52 +1118,52 @@ add_constructor(new StructConstructor(t->make_copy(), {}, new CompoundStatement(
 
 //default destructor
 add_destructor(new Destructor(t->make_copy(), new CompoundStatement({})));
-		`, "autogenerated_constructor_destructor");
-		</script>
-		
-		<p>
-		When a constructor is called, the compiler first allocates the necessary memory on the heap for the struct, then calls the default 
-		constructor on all the member variables from top to bottom, constructing them in place on the heap. Then the 
-		actual constructor gets ran. When the destructor is called, it all gets done in reverse, so first the destructor is ran, then the
-		member variables are destructed from bottom to top, finally the heap memory is deallocated. 
-		The compiler uses the copy constructor whenever it needs to move a struct around, for example when using the default assignment operator on a struct. 
-		</p>
-		
-		<p>
-		In some cases, the user may want to specify that they already have some memory allocated, and to just construct the struct in place in the 
-		allocated memory. I added the special 'construct in place' operator <code>:=</code> to encode this meaning.
-		</p>
-		
-		<pre><code>
+        `, "autogenerated_constructor_destructor");
+        </script>
+        
+        <p>
+        When a constructor is called, the compiler first allocates the necessary memory on the heap for the struct, then calls the default 
+        constructor on all the member variables from top to bottom, constructing them in place on the heap. Then the 
+        actual constructor gets ran. When the destructor is called, it all gets done in reverse, so first the destructor is ran, then the
+        member variables are destructed from bottom to top, finally the heap memory is deallocated. 
+        The compiler uses the copy constructor whenever it needs to move a struct around, for example when using the default assignment operator on a struct. 
+        </p>
+        
+        <p>
+        In some cases, the user may want to specify that they already have some memory allocated, and to just construct the struct in place in the 
+        allocated memory. I added the special 'construct in place' operator <code>:=</code> to encode this meaning.
+        </p>
+        
+        <pre><code>
 vector(vector& other) {
     this.cap = other.cap;
     this.sz = other.sz;
     this.arr = $T* malloc(sizeof(T) * this.cap);
     for(u64 i = $u64 0; i < this.sz; i++) this.arr[i] := other.arr[i];
 }
-		</code></pre>
-		
-		<h3>Templating</h3>
-		<p>
-		Templating is a very powerful feature that allows you to write generic code that can match to many types at once. 
-		Rather than defining the same function or struct multiple times for different types, a template allows for a single definition to be 
-		instantiated with multiple types as needed by the compiler. 
-		Even though it is a very powerful feature, it's not too bad to implement although it does make function call resolution quite alot more difficult. 
-		</p>
-		
-		<h4>Generating Template Instances</h4>
-		<p>
-		Suppose you have a templated struct <code>pair&lt;T, U&gt;</code> defined as
-		</p>
-		
-		<div id="pair_struct"></div>
-		<script>
-		insertCodeBlock(`
+        </code></pre>
+        
+        <h3>Templating</h3>
+        <p>
+        Templating is a very powerful feature that allows you to write generic code that can match to many types at once. 
+        Rather than defining the same function or struct multiple times for different types, a template allows for a single definition to be 
+        instantiated with multiple types as needed by the compiler. 
+        Even though it is a very powerful feature, it's not too bad to implement although it does make function call resolution quite alot more difficult. 
+        </p>
+        
+        <h4>Generating Template Instances</h4>
+        <p>
+        Suppose you have a templated struct <code>pair&lt;T, U&gt;</code> defined as
+        </p>
+        
+        <div id="pair_struct"></div>
+        <script>
+        insertCodeBlock(`
 template<T, U>
 struct pair {
     T first;
     U second;
-	
+    
     pair(T _first, U _second) {
         this.first = new T(_first);
         this.second = new U(_second);
@@ -1169,22 +1174,22 @@ struct pair {
         this.second = new U(_second);
     }
 }
-		`, "pair_struct");
-		</script>
-		
-		<p>
-		and we want to instantiate an instance of pair of type <code>pair&lt;i32, u64&gt;</code>. What my compiler does is just go through the entire 
-		templated struct definition, and does find and replace mapping <code>T</code> to <code>i32</code> and <code>U</code> to <code>u64</code>. The 
-		result will be a non-templated struct definition that can be then used by our pre-existing struct framework:
-		</p>
-		
-		<div id="pair_struct_instance"></div>
-		<script>
-		insertCodeBlock(`
+        `, "pair_struct");
+        </script>
+        
+        <p>
+        and we want to instantiate an instance of pair of type <code>pair&lt;i32, u64&gt;</code>. What my compiler does is just go through the entire 
+        templated struct definition, and does find and replace mapping <code>T</code> to <code>i32</code> and <code>U</code> to <code>u64</code>. The 
+        result will be a non-templated struct definition that can be then used by our pre-existing struct framework:
+        </p>
+        
+        <div id="pair_struct_instance"></div>
+        <script>
+        insertCodeBlock(`
 struct pair<i32, u64> {
     i32 first;
     u64 second;
-	
+    
     pair(i32 _first, u64 _second) {
         this.first = new i32(_first);
         this.second = new u64(_second);
@@ -1195,19 +1200,19 @@ struct pair<i32, u64> {
         this.second = new u64(_second);
     }
 }
-		`, "pair_struct_instance");
-		</script>
-		
-		<p>
-		Note that I also introduced primitive constructors so that you can seamlessly use primitive types in templates. 
-		Of course, this find and replace is blind to semantic correctness, so after we generate this new struct instance, we still have to make sure the 
-		struct layout is able to be generated and all member functions are semantically correct. Also, just a check for self 
-		referential member variables is no longer sufficient to be able to generate a struct layout, for example consider the struct definition:
-		</p>
-		
-		<div id="invalid_template_struct_definition"></div>
-		<script>
-		insertCodeBlock(`
+        `, "pair_struct_instance");
+        </script>
+        
+        <p>
+        Note that I also introduced primitive constructors so that you can seamlessly use primitive types in templates. 
+        Of course, this find and replace is blind to semantic correctness, so after we generate this new struct instance, we still have to make sure the 
+        struct layout is able to be generated and all member functions are semantically correct. Also, just a check for self 
+        referential member variables is no longer sufficient to be able to generate a struct layout, for example consider the struct definition:
+        </p>
+        
+        <div id="invalid_template_struct_definition"></div>
+        <script>
+        insertCodeBlock(`
 template<T>
 struct B {
     A<A<T>> foo;
@@ -1217,92 +1222,92 @@ template<T>
 struct A {
     B<T> foo;
 }
-		`, "invalid_template_struct_definition");
-		</script>
-		
-		<p>
-		Now the size of the struct is not the issue, it's the infinite template nesting that is the issue. To fix this, we can just set a hard cap on the
-		nesting depth. 
-		</p>
-		
-		<p>
-		Finally, how do we actually perform this find and replace? This is the tedious part as for every different type of AST node, we'll have to define
-		some recursive method that looks into all of its children for templated types. In jank, this is implemented by <code>replace_templated_types()</code>
-		and the implementation looks kind of like this:
-		</p>
-		
-		<div id="replace_templated_types_declaration"></div>
-		<script>
-		insertCodeBlock(`
+        `, "invalid_template_struct_definition");
+        </script>
+        
+        <p>
+        Now the size of the struct is not the issue, it's the infinite template nesting that is the issue. To fix this, we can just set a hard cap on the
+        nesting depth. 
+        </p>
+        
+        <p>
+        Finally, how do we actually perform this find and replace? This is the tedious part as for every different type of AST node, we'll have to define
+        some recursive method that looks into all of its children for templated types. In jank, this is implemented by <code>replace_templated_types()</code>
+        and the implementation looks kind of like this:
+        </p>
+        
+        <div id="replace_templated_types_declaration"></div>
+        <script>
+        insertCodeBlock(`
 bool Declaration::replace_templated_types(TemplateMapping *mapping) {
     if(auto x = mapping->find_mapped_type(type)) type = x;
     else if(!type->replace_templated_types(mapping)) return false;
     if(expr.has_value() && !expr.value()->replace_templated_types(mapping)) return false;
     return true;
 }
-		`, "replace_templated_types_declaration");
-		</script>
-		
-		<p>
-		Once we've implemented <code>replace_templated_types()</code> for all AST nodes, then we get templated function and overload generation for free!
-		</p>
-		
-		<h4>Templated Function Call Resolution</h4>
-		<p>
-		Suppose that we have two templated functions with signatures <code>template&lt;T&gt; foo(T)</code> and <code>template&lt;T&gt; foo(vector&lt;T&gt;)</code>.
-		Then, we make the function call: <code>foo(new vector&lt;i32&gt;())</code>. The question is which function should be called? 
-		Ideally, we should call the function that is more specialized to the input, so in this case I would say <code>template&lt;T&gt; foo(vector&lt;T&gt;)</code>
-		should be called.
-		</p>
-		
-		<p>
-		Let's rigorously define 'more specialized'. Consider two functions $A$ and $B$. Let the set of function calls that $A$ and $B$ can handle to be $S(A)$ and $S(B)$
-		respectively. With respect to some function call $F$, I say that $A$ is 'more specialized' for $F$ if $F \in S(A), F \in S(B)$ and $S(A) \subset S(B)$. 
-		So our function resolution with template specialization will look something like this:
-		</p>
-		
-		<ul>
-			<li> For some function call $F$, find the set of declared templated functions $X$ such that for all $x \in X$, $F \in S(x)$. </li>
-			<li> Determine if there exists some $x' \in X$ such that $S(x') \subset S(x)$ for all $x \in X, x \neq x'$. </li>
-			<li> If $x'$ exists, then generate an instance of $x'$ using $F$ and return that as the called function. </li>
-		</ul>
-		
-		<p>
-		We have several problems to solve, the first one of them being for some $F$ and $x$, how do we determine if it's true that $F \in S(x)$?
-		Consider matching the function call <code>foo(pair&lt;i32*, i32**&gt;)</code> to the templated function signature <code>template&lt;T&gt; foo(pair&lt;T, T*&gt;)</code>. 
-		How can we infer that <code>T</code> is <code>i32*</code>? First, we can reinterpret the types in the function call and signature as a rooted tree:
-		</p>
-		
-		<!-- image of type trees -->
-		<figure>
-			<img src="type_tree.png" width="45%">
-		</figure>
-		
-		<p>
-		Observe that if we simultaneously walk both the function call and function signature type trees, when we arrive at <code>T</code> in the signature
-		tree, the corresponding subtree within the function call tree must be equal to <code>T</code>. Anything we visit before we arrive at <code>T</code> 
-		must exactly match between the subtrees. If <code>T</code> appears multiple times, then all occurrences of <code>T</code> must map to the exact
-		same subtree. So we can just walk both trees simultaneously and generate what all the template variables must be. In jank, if we can't figure out
-		all the values of the template variables just from the function signature, I treat it as a semantic error. 
-		</p>
-		
-		<p>
-		Next, given two templated functions $A, B$, how can we determine if $S(A) \subset S(B)$? We can actually reuse the stuff that we did to determine 
-		if a function call can match a templated function, but we instead feed $A$ as the function call to $B$. The idea is that if we can create a mapping
-		from $A$ to $B$, then for any values of the template variables in $A$, we can directly use the mapping to generate the values of the template variables
-		of $B$, therefore $S(A) \subseteq S(B)$. Then, we just need to check that it's impossible to create a mapping from $B$ to $A$, proving $S(A) \subset S(B)$. 
-		</p>
-		
-		<p>
-		Finally, to figure out if there exists $x' \in X$ such that $S(x') \subset S(x)$ for all $x \in X, x \neq x'$, the best solution I came up with is
-		to just brute force this in $O(|X|^2)$ time. One cool extension to this is that we can also use this to enforce reference semantics. If we
-		treat <code>T&</code> as a pattern only able to match l-values, and <code>T</code> being able to match both l-values and r-values, we can
-		just enforce this as a pre-processing step before stripping all references. 
-		</p>
-		
-		<div id="function_calc_mapping"></div>
-		<script>
-		insertCodeBlock(`
+        `, "replace_templated_types_declaration");
+        </script>
+        
+        <p>
+        Once we've implemented <code>replace_templated_types()</code> for all AST nodes, then we get templated function and overload generation for free!
+        </p>
+        
+        <h4>Templated Function Call Resolution</h4>
+        <p>
+        Suppose that we have two templated functions with signatures <code>template&lt;T&gt; foo(T)</code> and <code>template&lt;T&gt; foo(vector&lt;T&gt;)</code>.
+        Then, we make the function call: <code>foo(new vector&lt;i32&gt;())</code>. The question is which function should be called? 
+        Ideally, we should call the function that is more specialized to the input, so in this case I would say <code>template&lt;T&gt; foo(vector&lt;T&gt;)</code>
+        should be called.
+        </p>
+        
+        <p>
+        Let's rigorously define 'more specialized'. Consider two functions $A$ and $B$. Let the set of function calls that $A$ and $B$ can handle to be $S(A)$ and $S(B)$
+        respectively. With respect to some function call $F$, I say that $A$ is 'more specialized' for $F$ if $F \in S(A), F \in S(B)$ and $S(A) \subset S(B)$. 
+        So our function resolution with template specialization will look something like this:
+        </p>
+        
+        <ul>
+            <li> For some function call $F$, find the set of declared templated functions $X$ such that for all $x \in X$, $F \in S(x)$. </li>
+            <li> Determine if there exists some $x' \in X$ such that $S(x') \subset S(x)$ for all $x \in X, x \neq x'$. </li>
+            <li> If $x'$ exists, then generate an instance of $x'$ using $F$ and return that as the called function. </li>
+        </ul>
+        
+        <p>
+        We have several problems to solve, the first one of them being for some $F$ and $x$, how do we determine if it's true that $F \in S(x)$?
+        Consider matching the function call <code>foo(pair&lt;i32*, i32**&gt;)</code> to the templated function signature <code>template&lt;T&gt; foo(pair&lt;T, T*&gt;)</code>. 
+        How can we infer that <code>T</code> is <code>i32*</code>? First, we can reinterpret the types in the function call and signature as a rooted tree:
+        </p>
+        
+        <!-- image of type trees -->
+        <figure>
+            <img src="type_tree.png" width="45%">
+        </figure>
+        
+        <p>
+        Observe that if we simultaneously walk both the function call and function signature type trees, when we arrive at <code>T</code> in the signature
+        tree, the corresponding subtree within the function call tree must be equal to <code>T</code>. Anything we visit before we arrive at <code>T</code> 
+        must exactly match between the subtrees. If <code>T</code> appears multiple times, then all occurrences of <code>T</code> must map to the exact
+        same subtree. So we can just walk both trees simultaneously and generate what all the template variables must be. In jank, if we can't figure out
+        all the values of the template variables just from the function signature, I treat it as a semantic error. 
+        </p>
+        
+        <p>
+        Next, given two templated functions $A, B$, how can we determine if $S(A) \subset S(B)$? We can actually reuse the stuff that we did to determine 
+        if a function call can match a templated function, but we instead feed $A$ as the function call to $B$. The idea is that if we can create a mapping
+        from $A$ to $B$, then for any values of the template variables in $A$, we can directly use the mapping to generate the values of the template variables
+        of $B$, therefore $S(A) \subseteq S(B)$. Then, we just need to check that it's impossible to create a mapping from $B$ to $A$, proving $S(A) \subset S(B)$. 
+        </p>
+        
+        <p>
+        Finally, to figure out if there exists $x' \in X$ such that $S(x') \subset S(x)$ for all $x \in X, x \neq x'$, the best solution I came up with is
+        to just brute force this in $O(|X|^2)$ time. One cool extension to this is that we can also use this to enforce reference semantics. If we
+        treat <code>T&</code> as a pattern only able to match l-values, and <code>T</code> being able to match both l-values and r-values, we can
+        just enforce this as a pre-processing step before stripping all references. 
+        </p>
+        
+        <div id="function_calc_mapping"></div>
+        <script>
+        insertCodeBlock(`
 TemplateMapping* TemplatedFunction::calc_mapping(std::vector<Type*> arg_types) {
     // - does the number of arguments match?
     if(function->parameters.size() != arg_types.size()) return nullptr;
@@ -1336,58 +1341,89 @@ TemplateMapping* TemplatedFunction::calc_mapping(std::vector<Type*> arg_types) {
 
     return mapping;
 }
-		`, "function_calc_mapping");
-		</script>
-		
-		<p>
-		One note on implementation: it might be easier to implement this if you just treat all functions as templated functions. So untemplated functions
-		can just be treated as templated functions with no template variables. 
-		</p>
-		
-		<h2>Assembly Codegen</h2>
-		<p>
-		Once the compiler makes sure the AST represents a valid program, it's time to generate the assembly code. 
-		For now, my compiler directly generates the assembly code from the AST, but in the future I would like to introduce some IR layers between the AST and codegen. 
-		</p>
-		
-		<h3>Calling Convention</h3>
-		<p>
-		I first need a consistent way for my generated code to keep track of data during execution. 
-		This pretty much amounts to designing a stack frame layout, a convention that defines where function arguments, local variables, and return address live on the stack. 
-		By establishing this invariant, every function can be generated under the same assumptions which makes codegen simpler and more reliable. 
-		In jank, the stack frame looks something like this:
-		</p>
-		
-		<!-- show image of stack frame -->
-		
-		<p>
-		And in assembly, it looks something like this:
-		</p>
-		
-		<!-- example stack frame setup / teardown -->
-		
-		<p>
-		As a convention, I also decided that any return values would be placed inside <code>%rax</code> and that all local variables will be placed on the stack. 
-		In addition, every single register is callee saved. 
-		These decisions are mostly for the sake of simplicity as I haven't gotten around to proper register allocation yet.
-		</p>
-		
-		<h3>Expressions</h3>
-		<p>
-		Before emitting assembly, I preprocess the AST so that all overloaded operators are turned into function calls, therefore all non-leaf nodes
-		will represent a builtin operator. Then, I emit the assembly such that the expression nodes will be computed in a postorder DFS traversal ordering. 
-		To make it easier, I wrote every builtin operator to have roughly the same interface, for example binary operators will always expect the left
-		argument in <code>%rax</code>, the right argument in <code>%rbx</code> and if the left argument is an l-value, its address in <code>%rcx</code>.
-		All builtin operators will place the return value in <code>%rax</code>. 
-		</p>
-		
-		<p>
-		For example, this is what emitting a binary arithmetic operator looks like:
-		</p>
-		
-		<div id="asm_binary_arithmetic"></div>
-		<script>
-		insertCodeBlock(`
+        `, "function_calc_mapping");
+        </script>
+        
+        <p>
+        One note on implementation: it might be easier to implement this if you just treat all functions as templated functions. So untemplated functions
+        can just be treated as templated functions with no template variables. 
+        </p>
+        
+        <h2 id="assembly_codegen">Assembly Codegen</h2>
+        <p>
+        Once the compiler makes sure the AST represents a valid program, it's time to generate the assembly code. 
+        For now, my compiler directly generates the assembly code from the AST, but in the future I would like to introduce some IR layers between the AST and codegen. 
+        </p>
+        
+        <h3>Calling Convention</h3>
+        <p>
+        I first need a consistent way for my generated code to keep track of data during execution. 
+        This pretty much amounts to designing a stack frame layout, a convention that defines where function arguments, local variables, and return address live on the stack. 
+        By establishing this invariant, every function can be generated under the same assumptions which makes codegen simpler and more reliable. 
+        In jank, the stack frame looks something like this:
+        </p>
+        
+        <!-- show image of stack frame -->
+        
+        <p>
+        And in assembly, it looks something like this:
+        </p>
+        
+        <!-- example stack frame setup / teardown -->
+        <pre><code>
+# func(x, y) = x + y
+func:
+    # save old %rbp
+    push %rbp
+    mov %rsp, %rbp
+    
+    # 24(%rbp) holds x
+    movq 24(%rbp), %rax
+    
+    # 16(%rbp) holds y
+    movq 16(%rbp), %rbx
+    
+    # compute return value, put into %rax
+    add %rbx, %rax
+    
+    # return old %rbp
+    pop %rbp
+    ret
+    
+main:
+    # call func(10, 20)
+    movq $10, %rax
+    pushq %rax
+    movq $20, %rax
+    pushq %rax
+    call func
+    add $16, %rsp    # cleanup function arguments
+    
+    # %rax should now hold 30
+        </code></pre>
+        
+        <p>
+        As a convention, I also decided that any return values would be placed inside <code>%rax</code> and that all local variables will be placed on the stack. 
+        In addition, every single register is callee saved. 
+        These decisions are mostly for the sake of simplicity as I haven't gotten around to proper register allocation yet.
+        </p>
+        
+        <h3>Expressions</h3>
+        <p>
+        Before emitting assembly, I preprocess the AST so that all overloaded operators are turned into function calls, therefore all non-leaf nodes
+        will represent a builtin operator. Then, I emit the assembly such that the expression nodes will be computed in a postorder DFS traversal ordering. 
+        To make it easier, I wrote every builtin operator to have roughly the same interface, for example binary operators will always expect the left
+        argument in <code>%rax</code>, the right argument in <code>%rbx</code> and if the left argument is an l-value, its address in <code>%rcx</code>.
+        All builtin operators will place the return value in <code>%rax</code>. 
+        </p>
+        
+        <p>
+        For example, this is what emitting a binary arithmetic operator looks like:
+        </p>
+        
+        <div id="asm_binary_arithmetic"></div>
+        <script>
+        insertCodeBlock(`
 right->emit_asm();
 emit_push("%rax", "ExprBinary::emit_asm() : save right");
 left->emit_asm();
@@ -1396,18 +1432,18 @@ emit_pop("%rbx", "ExprBinary::emit_asm() : save right");
 Operator *o = get_called_operator(left, str_op, right);
 assert(dynamic_cast<BuiltinOperator*>(o) != nullptr);
 dynamic_cast<BuiltinOperator*>(o)->emit_asm();
-		`, "asm_binary_arithmetic");
-		</script>
-		
-		<p>
-		<code>emit_push()</code> is just a wrapper that keeps track of descriptions of what's on the stack and makes sure the descriptions match when <code>emit_pop()</code> is called. 
-		Of course, if the operator has special default behaviour we'll sometimes need to emit some custom code. Probably the most custom code I wrote for an operator was for
-		the assignment and assign in place operators. I first check if the type being assigned is primitive, and if so, we can just copy the value into the variable's memory location. 
-		</p>
-		
-		<div id="asm_assignment_primitive"></div>
-		<script>
-		insertCodeBlock(`
+        `, "asm_binary_arithmetic");
+        </script>
+        
+        <p>
+        <code>emit_push()</code> is just a wrapper that keeps track of descriptions of what's on the stack and makes sure the descriptions match when <code>emit_pop()</code> is called. 
+        Of course, if the operator has special default behaviour we'll sometimes need to emit some custom code. Probably the most custom code I wrote for an operator was for
+        the assignment and assign in place operators. I first check if the type being assigned is primitive, and if so, we can just copy the value into the variable's memory location. 
+        </p>
+        
+        <div id="asm_assignment_primitive"></div>
+        <script>
+        insertCodeBlock(`
 Type *lt = left->resolve_type(), *rt = right->resolve_type();
 assert(lt->equals(rt));
 
@@ -1427,19 +1463,19 @@ if(is_type_primitive(lt)) {
     emit_pop("%rax", "ExprBinary::emit_asm() : = save right");
     emit_mem_store(sz);
 }
-		`, "asm_assignment_primitive");
-		</script>
-		
-		<p>
-		Otherwise, we have to invoke the copy constructor. One note on how structs are represented in memory: if you have a variable that 'is' the struct, like <code>A foo = new A()</code>, 
-		I don't actually store the struct on the stack, instead I store a pointer to the struct. This does make it so that <code>A</code> and <code>A*</code> are identical on the stack, 
-		however I have a bunch of code to handle this special case so that it's transparent to the user. So what a constructor really returns is just a pointer to the start of the newly
-		constructed struct's memory. This decision was mostly made to make stack management easier, this way all variables can be stored in a register and using 8 bytes on the stack. 
-		</p>
-		
-		<div id="asm_assignment_struct"></div>
-		<script>
-		insertCodeBlock(`
+        `, "asm_assignment_primitive");
+        </script>
+        
+        <p>
+        Otherwise, we have to invoke the copy constructor. One note on how structs are represented in memory: if you have a variable that 'is' the struct, like <code>A foo = new A()</code>, 
+        I don't actually store the struct on the stack, instead I store a pointer to the struct. This does make it so that <code>A</code> and <code>A*</code> are identical on the stack, 
+        however I have a bunch of code to handle this special case so that it's transparent to the user. So what a constructor really returns is just a pointer to the start of the newly
+        constructed struct's memory. This decision was mostly made to make stack management easier, this way all variables can be stored in a register and using 8 bytes on the stack. 
+        </p>
+        
+        <div id="asm_assignment_struct"></div>
+        <script>
+        insertCodeBlock(`
 else {
     //generate right struct
     right->emit_asm();
@@ -1492,68 +1528,419 @@ else {
 
 //the value of left after the assignment should be in %rax
 //the address of left should be in %rcx
-		`, "asm_assignment_struct");
-		</script>
-		
-		<h3>Function Calls</h3>
-		<p>
-		Calling a function is just a matter of building the arguments properly on the stack, and then doing <code>call label</code>. The function itself is then
-		responsible for setting up the rest of the stack frame (saving the old <code>%rbp</code>). To build the arguments on the stack, I take advantage of my variable
-		system to just create compiler temporary variables on the stack that each correspond to an argument. 
-		</p>		
-		
-		<h3>References</h3>
-		<p>
-			
-		</p>
-		
-		<h3>Structs</h3>
-		<p>
-			
-		</p>
-		
-		<h3>Stack Management</h3>
-		<p>
-		This is more of an implementation detail. 
-		</p>
-		
-		<h2>Miscellaneous Features</h2>
-		
-		<h3>Global Nodes</h3>
-		
-		<h3>Typedefs</h3>
-		
-		<h2>Language Server</h2>
-		<p>
-		While having a working compiler is necessary to use a language, battling syntax errors in a plaintext file for a few hours makes you appreciate 
-		syntax highlighting and error squiggles so much more. Just having those features makes the code much easier to read, and makes it so that you
-		don't have to run the compiler to catch syntax errors. To add these features, I created my own implementation of a language server for jank
-		and published it as a VSCode extension. 
-		</p>
-		
-		<h3>Setup</h3>
-		
-		<h3>Publishing</h3>
-		
-		<h3>Error Tolerant Parsing</h3>
-			
-		<h2>Improvements</h2>
-		<p>
-		What I have right now isn't really a compiler, it's more of a compiler frontend plus some assembly codegen tacked on top. 
-		This hardcoded codegen makes it so that supporting other CPU architectures and OSes is relatively hard as I would need to rewrite 
-		generating the code from the AST instead of dropping in different instructions. 
-		And using gcc for machine code generation seems kind of like cheating. 
-		So here is my list of things I want to implement in the future. 
-		</p>
-		
-		<ul>
-			<li> Add HIR layer after semantic analysis. This simplifies codegen and allows us to do more easily do high level optimizations. </li>
-			<li> Add LIR layer after HIR so we can more easily control register allocation and do low level optimizations. </li>
-			<li> Write the assembly to machine code step. </li>
-			<li> Implement more descriptive semantic errors, such as including line numbers or generate semantic error tokens for the language server. </li>
-		</ul>
-		
-	</div>
+        `, "asm_assignment_struct");
+        </script>
+        
+        <h3>Function Calls</h3>
+        <p>
+        Calling a function is just a matter of building the arguments properly on the stack, and then doing <code>call label</code>. The function itself is then
+        responsible for setting up the rest of the stack frame (saving the old <code>%rbp</code>). To build the arguments on the stack, I take advantage of my variable
+        system to just create compiler temporary variables on the stack that each correspond to an argument. As local variables are stored in order on the stack, 
+        the function call just reinterprets them as part of the called function's stack frame. 
+        </p>        
+        
+        <div id="function_call_asm"></div>
+        <script>
+        insertCodeBlock(`
+void FunctionCall::emit_asm() {
+    if(asm_debug) fout << indent() << "# calling function : " << id->name << "\\n";
+    
+    //find original function
+    Function *f = this->resolve_called_function();
+    assert(f != nullptr);
+    
+    //if is member function, pass in target struct as an argument
+    //expects the target struct to be in %rax
+    if(target_type.has_value()) {  //member function
+        emit_push("%rax", "FunctionCall::emit_asm() : target struct");
+    }
+
+    //create temp variables for all arguments
+    push_declaration_stack();
+    assert(f->parameters.size() == argument_list.size());
+    for(int i = 0; i < argument_list.size(); i++){
+        if(asm_debug) fout << indent() << "# function call member variable : " << f->parameters[i]->id->name << "\\n";
+        Identifier *id = new Identifier(create_new_tmp_variable_name());
+        Variable *v = emit_initialize_stack_variable(f->parameters[i]->type, id, argument_list[i]);
+        assert(v != nullptr);
+    }
+
+    //call function
+    std::string label = get_function_label(f->resolve_function_signature());
+    fout << indent() << "call " << label << "\\n";
+
+    //clean up argument temp variables
+    pop_declaration_stack();
+
+    //clean up target struct argument
+    if(target_type.has_value()) {
+        emit_add_rsp(8, "FunctionCall::emit_asm() : target struct");
+    }
+}
+        `, "function_call_asm");
+        </script>
+        
+        <h3>References</h3>
+        <p>
+        When we bind a reference to a l-value, we expect the declared reference to be just an alias to the provided l-value. So in the assembly code, I just treat 
+        the type <code>T&</code> exactly the same as <code>T*</code> when initializing it.
+        </p>
+        
+        <pre><code>
+//zero initialize primitive
+fout << indent() << "movq $0, " << addr_str << "\n";
+
+//evaluate expr
+//%rax = value, %rcx = addr
+expr.value()->emit_asm();
+
+//save addr into variable
+fout << indent() << "movq %rcx, " << addr_str << "\n";
+        </code></pre>
+        
+        <p>During expression evaluation I automatically dereference any <code>T&</code>
+        types so that it's as if we just used the original l-value in the expression. 
+        </p>
+        
+        <div id="variable_load_asm"></div>
+        <script>
+        insertCodeBlock(`
+Identifier *id = std::get<Identifier*>(val);   //supplied from ExprPrimary node
+Variable *v = get_variable(id);
+assert(v != nullptr);
+
+if(asm_debug) fout << indent() << "# load variable " << id->name << "\\n";
+fout << indent() << "mov " << v->addr << ", %rax\\n";  //value
+
+//address. 
+//For structs, they are supposed to be their main memory, so their address is the same as their value
+//since struct T* is the same as T, T& is also the same as T (it's just we auto dereference T&)
+if(is_type_primitive(v->type)) {
+    fout << indent() << "lea " << v->addr << ", %rcx\\n";  //address
+}
+else {
+    fout << indent() << "mov " << v->addr << ", %rcx\\n";  //address
+}
+
+//if this is a reference, dereference it
+Type *vt = v->type;
+if(dynamic_cast<ReferenceType*>(vt)) {
+    emit_dereference(vt);
+}
+        `, "variable_load_asm");
+        </script>
+        
+        <h2 id="miscellaneous_features">Miscellaneous Features</h2>
+        
+        <h3>Global Nodes</h3>
+        <p>
+        I didn't like the lack of control over the global variable declaration order across multiple files in languages like C/C++, so I came up with 'global nodes' to remedy this. 
+        My original idea was to dynamically detect dependencies between global variables, however that turned out to be too complicated when I thought about tracking function side effects. 
+        Instead, I settled on the idea that the user has to explicitly encode the dependencies in a global node graph, and the actual declarations can be bound to specific nodes within the graph. 
+        I also provided a node that is always first, <code>__GLOBAL_FIRST__</code>, and any declaration that isn't bound to a node is declared after all declarations bound to nodes. 
+       	</p>
+       	
+       	<p>
+       	I found this to be especially useful when writing the kernel for jank-os. For example, if I want to be able to malloc anything in a global variable, I will need the physical memory allocator (PMA)
+       	then malloc set up first. Using the global nodes, I can ensure that anything that depends on malloc is set up after malloc is set up, and that malloc gets set up after the PMA. 
+       	</p>
+       	
+       	<pre><code>
+#global_node PMA;
+#global_node MALLOC [PMA];
+#global_node BUFFER [MALLOC];
+
+[PMA] i32 pma_init_status = init_pma();
+[MALLOC] i32 malloc_init_status = init_malloc();
+[BUFFER] u8* buf = $u8* malloc(0x1000);
+       	</code></pre>
+       	
+        <h3>Typedefs</h3>
+        <p>
+        After using <code>u64</code> for everything in my OS code, I decided that implementing C-style typedefs is a good idea. 
+        Since it's just a drop-in replacement, we can reuse our template instance generation code to replace all typedef'd types within the AST.
+        However, we need to be careful in which order we apply the typedefs.  
+        For example, consider the following typedefs:
+        </p>
+        
+        <pre><code>
+#typedef pte_t u64;
+#typedef pagetable_t pte_t*;
+        </code></pre>
+        
+        <p>
+        If we apply <code>pte_t</code> then <code>pagetable_t</code>, there may still be some leftover <code>pte_t</code> in the AST, but if we apply <code>pagetable_t</code> then <code>pte_t</code>,
+        there won't be any of either type left within the AST. In general, draw a directed edge from typedef $A$ to typedef $B$ if $B$ appears somewhere in $A$. All we need to do is find a topological ordering
+        of the typedefs and then apply them in that order. 
+        </p>
+        
+        <h2 id="language_server">Language Server</h2>
+        <p>
+        While having a working compiler is necessary to use a language, battling syntax errors in a plaintext file for a few hours makes you appreciate 
+        syntax highlighting and error squiggles so much more. Just having those features makes the code much easier to read, and makes it so that you
+        don't have to run the compiler to catch syntax errors. To add these features, I created my own implementation of a language server for jank
+        and published it as a VSCode extension. 
+        </p>
+        
+        <h3>LSP Overview</h3>
+        <p>
+        Language Server Protocol (LSP) aims to solve the many-to-one problem inherent in writing IDE tools for languages. Originally, if you wanted to have comprehensive support for your 
+        language, then you would have to provide implementations of your support for all the existing popular IDEs. Instead of doing this, if all the IDEs can agree on 
+        one protocol in which to communicate with language support tools, then you would only need to write one implementation, the Language Server, and then all
+        the IDEs which use this protocol can communicate with it.  
+        </p>
+        
+        <h3>Setup</h3>
+        <p>
+        Microsoft has kindly provided some VSCode extension samples, so I went ahead and copied the <a href="https://github.com/Microsoft/vscode-extension-samples/tree/main/lsp-sample">LSP Example</a>
+        as a starting point. To specify to the user which endpoints we have implemented, we can send the details when we initialize the connection. 
+        Since our aim is to provide syntax based highlighting, we just need to implement the <code>semanticTokensProvider</code> endpoint. 
+        <p>
+        
+        <pre><code>
+const tokenTypesLegend = [
+    'type', 'string', 'keyword', 'number', 'comment'
+]
+        
+connection.onInitialize((params: InitializeParams) => {
+    const result: InitializeResult = {
+        capabilities: {
+            textDocumentSync: TextDocumentSyncKind.Incremental,
+            semanticTokensProvider: {
+                legend: {
+                    tokenTypes: tokenTypesLegend,
+                    tokenModifiers: []
+                },
+                full: true
+            }
+        },
+    };
+    return result;
+});
+        </code></pre>
+        
+        <p>
+        We just need to specify what types of tokens we're going to return via <code>tokenTypes</code>, and since I'm not going to implement partial parsing we set <code>full: true</code>.
+        Next, we need to implement the actual endpoint. Since all my parsing code is in C++, I decided to just write a little command line tool that would take in a file and spit out
+        the highlighting tokens in JSON format. Then for the endpoint, we can just call the tool and send the results to the user. 
+        </p>
+        
+        <pre><code>
+function runParserCLI(text: string): Promise<any> {
+    return new Promise((resolve, reject) => {
+        const parserPath = __dirname + "/parser_cli";
+        const proc = spawn(parserPath);
+        let output = '';
+
+        proc.stdout.on('data', (chunk) => output += chunk);
+        proc.stderr.on('data', (err) => console.error(err.toString()));
+
+        proc.on('close', (code) => {
+            if (code !== 0) reject(new Error(`CLI exited with code ${code}`));
+            else resolve(JSON.parse(output));
+        });
+
+        proc.stdin.write(text);
+        proc.stdin.end();
+    });
+}
+
+function encodeHighlightTokensLSP(tokens: any[]): number[] {
+    const data: number[] = [];
+    let prev_line = 0;
+    let prev_col = 0;
+
+    for (const t of tokens) {
+        const delta_line = t.line - prev_line;
+        const delta_col = delta_line === 0 ? t.col - prev_col : t.col;
+        prev_line = t.line;
+        prev_col = t.col;
+
+        const tokenTypeIndex = tokenTypesLegend.indexOf(t.type);
+        const tokenModifierBitset = 0;
+
+        data.push(delta_line, delta_col, t.length, tokenTypeIndex, tokenModifierBitset);
+    }
+
+    return data;
+}
+        
+connection.languages.semanticTokens.on(async (params) => {
+    const uri = params.textDocument.uri;
+    const document = documents.get(uri);
+    if (!document) return { data: [] };
+
+    const text = document.getText();
+    const parse_res = await runParserCLI(text);
+    const highlight_tokens = parse_res["highlight_tokens"];
+    const highlight_data = encodeHighlightTokensLSP(highlight_tokens);
+
+    return { data: highlight_data };
+});
+        </code></pre>
+        
+        <p>
+        To generate the highlighting tokens in <code>parser_cli.cpp</code>, I just produce and walk the syntax tree and have a bunch of hardcoded cases for various tokens I want to highlight. 
+        </p>
+        
+        <div id="highlight_cli"></div>
+        <script>
+        insertCodeBlock(`
+void generate_tokens(parser::token *tok, bool in_struct) {
+    //types
+    if(tok->token_type == "base_type") {
+        //builtin types
+        if(builtin_types.count(tok->to_string())) {
+            highlight_tokens.push_back(semantic_token(tok, "keyword"));
+        }
+        else {
+            highlight_tokens.push_back(semantic_token(tok, "type"));
+        }
+        return;
+    }
+
+    //strings
+    if(tok->token_type == "literal_string" || tok->token_type == "literal_char" ||
+        tok->token_type == "library_path" || tok->token_type == "inline_asm_string") {
+        highlight_tokens.push_back(semantic_token(tok, "string"));
+        return;
+    }
+
+    // ... and so on ...
+
+    //generate highlighting for children
+    if(tok->token_type == "struct_definition") in_struct = true;
+    for(int i = 0; i < tok->token_children.size(); i++){
+        generate_tokens(tok->token_children[i], in_struct);
+    }
+}
+           `, "highlight_cli");
+        </script>
+           
+        <p>
+        From here, I'm assuming that you copied the LSP Example provided by Microsoft, are on some flavor of Linux, and using VSCode. To test our extension, we first need to install the correct version of npm:
+        </p>
+        
+        <pre><code>
+# install nvm to ensure npm version
+curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
+# then follow the instructions (have to run some commands)
+# finally, install correct version of npm
+nvm install 20
+nvm use 20
+        </code></pre>
+        
+        <p>
+        Next, use the shortcut <code>Ctrl + Shift + B</code> to build. Then, <code>Ctrl + Shift + D</code> should open up a sidebar with a 'Debug' button at the top. Clicking it will open
+        up a new window with your extension active. 
+        </p>
+        
+        <h3>Error Tolerant Parsing</h3>
+        <p>
+        One issue with what we currently have is that once we make a syntax error, all of our highlighting goes away. This is because our current greedy parser only succeeds if the entire program
+        is well formed; if there exists a syntax error the parser fails and returns nothing. It would be nice if our text highlighting didn't go away while typing, and it would
+        be even better if we also told the user where a syntax error was via some error squiggles. We can do both of these by introducing error rules to our parser. 
+        </p>
+        
+        <p>
+        The idea behind an error rule is to provide a fallback rule that will consume anything in the case that some other rule doesn't parse. For now, we can say that <code>error</code>
+        is a predefined identifier in our grammar and it consumes everything.
+        It's considered a parse success if it consumes at least one character and a parse failure otherwise. 
+        So for example, we can use this inside <code>compound_statement</code> rule to provide a catch-all in case we can't parse a statement. 
+        </p>
+        
+        <pre><code>
+statement = simple_statement
+          | control_statement
+          | compound_statement ;
+simple_statement = "return" , [ rws , expression ] , ows , ";"
+                 | "break" , ows , ";" 
+                 | "continue" , ows , ";" 
+                 | declaration , ows , ";" 
+                 | expression , ows , ";" 
+                 | inline_asm , ows , ";" ;
+control_statement = "if" , ows , "(" , ows ,  expression , ows , ")" , ows , statement , [ rws , "else" , rws , statement ]
+                  | "while" , ows , "(" , ows , expression , ows , ")" , ows , statement 
+                  | "for" , ows , "(" , ows , [ declaration ] , ows , ";" , ows , [ expression ] , ows , ";" , ows , [ expression ] , ows , ")" , ows , statement ;
+compound_statement = "{" , ows , { ( statement | error ) , ows } , "}" ;
+       </code></pre>
+           
+       <p>
+       However this means that once we see a malformed statement, we will parse the rest of the file as one big error token. 
+       This is fine if we just want our syntax highlighting to not disappear, but it would be more useful if we could somehow recover after encountering an error so that the user knows
+       exactly where the error is (or at least which statment the error occurred).
+       To do this, we want a way to tell the error rule to stop parsing. In this case, since every statement except for <code>compound_statement</code> ends with a semicolon, we can
+       tell the error rule to keep parsing until it sees a semicolon. 
+       Note that our selection of the error termination rule can be somewhat arbitrary as once we've started parsing an error token, the input is already considered malformed. 
+       </p>
+       
+       <p>
+       One more issue we have to consider is that there may be some containing structure that we still want to parse. In the case of <code>compound_statement</code>, we still need to parse 
+       a bracket to end it. So it looks like we can add <code>"}"</code> as an alternative to <code>";"</code> in the error rule stop condition, however there is a small nuance: when we see <code>}</code>
+       we want the error rule to stop immediately, while if we see <code>;</code> we want the error rule to first consume <code>;</code> and then stop. 
+       I call these two the 'stop' and 'consume' rules and I found that these two together make for some decent error handling. 
+       So the final version of <code>compound_statement</code> looks like
+       </p>
+       
+       <pre><code>
+compound_statement = "{" , ows , { ( statement | error( "}" & ";" ) ) , ows } , "}" ;
+       </code></pre>
+       
+       <p>
+       Finally, we need to report the error tokens back to the user so that VSCode can render error squiggles. We can report errors to the user by sending a diagnostics notification with
+       the encoded tokens. It's sufficient to send the diagnostics notification every time the user requests highlighting tokens. 
+       </p>
+           
+       <div id="error_tokens_server"></div>
+       <script>
+       insertCodeBlock(`
+function sendDiagnostics(connection: Connection, uri: string, diagnostics: Diagnostic[]): void {
+  const params: PublishDiagnosticsParams = {
+    uri,
+    diagnostics
+  };
+  connection.sendDiagnostics(params);
+}
+
+function encodeDiagnostics(errors: any[]): Diagnostic[] {
+    return errors.map(e => ({
+        message: e.message,
+        severity: DiagnosticSeverity.Error,  // can also be Warning, Info, Hint
+        range: {
+            start: { line: e.start_line, character: e.start_col },
+            end: { line: e.end_line, character: e.end_col }
+        },
+        source: "parser"
+    }));
+}
+        `, "error_tokens_server");
+        </script>
+           
+        <p>
+        If everything works, you should have nice, error tolerant, syntax highlighting :3
+        </p>
+        
+        <figure>
+        	<img src="jank_highlighting.png" width="50%">
+        </figure>
+            
+        <h2 id="improvements">Improvements</h2>
+        <p>
+        What I have right now isn't really a compiler, it's more of a compiler frontend plus some assembly codegen tacked on top. 
+        This hardcoded codegen makes it so that supporting other CPU architectures and OSes is relatively hard as I would need to rewrite 
+        generating the code from the AST instead of dropping in different instructions. 
+        And using gcc for machine code generation seems kind of like cheating. 
+        So here is my list of things I want to implement in the future. 
+        </p>
+        
+        <ul>
+            <li> Add HIR layer after semantic analysis. This simplifies codegen and allows us to do more easily do high level optimizations. </li>
+            <li> Add LIR layer after HIR so we can more easily control register allocation and do low level optimizations. </li>
+            <li> Write the assembly to machine code step. </li>
+            <li> Implement more descriptive semantic errors, such as including line numbers or generate semantic error tokens for the language server. </li>
+        </ul>
+        
+    </div>
 </div>
 
 </html>
