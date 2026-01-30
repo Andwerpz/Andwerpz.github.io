@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="ISO-8859-1">
+<title>Portfolio - jank-os</title>
+<link rel="stylesheet" href="../../../styles/styles.css">
+</head>
+
+<script src = "https://cdn.jsdelivr.net/npm/p5@1.2.0/lib/p5.js"></script>
+<script src="http://cdnjs.cloudflare.com/ajax/libs/p5.js/0.5.6/addons/p5.dom.js"></script>
+<script src = "../../../js/banner/sketch.js"></script>
+<script src = "../../../js/banner/boid.js"></script>    
+
+<script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      jax: ["input/TeX", "output/HTML-CSS"],
+      extensions: ["tex2jax.js"],
+      "HTML-CSS": { preferredFont: "TeX", availableFonts: ["STIX","TeX"] },
+      tex2jax: { inlineMath: [ ["$", "$"], ["\\(","\\)"] ], displayMath: [ ["$$","$$"], ["\\[", "\\]"] ], processEscapes: true, ignoreClass: "tex2jax_ignore|dno" },
+      TeX: { noUndefined: { attributes: { mathcolor: "red", mathbackground: "#FFEEEE", mathsize: "90%" } } },
+      messageStyle: "none"
+    });
+</script>    
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js"></script>
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/default.min.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/glsl.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/cpp.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/languages/java.min.js"></script>
+<script>hljs.highlightAll();</script>
+
+<script>
+function escapeHTML(str) {
+  return str
+    .replace(/&/g, "&amp;")   // escape ampersands first
+    .replace(/</g, "&lt;")    // escape <
+    .replace(/>/g, "&gt;");   // escape >
+}
+
+function insertCodeBlock(str, target) {
+  const pre = document.createElement("pre");
+  const code = document.createElement("code");
+
+  code.innerHTML = escapeHTML(str);
+  pre.appendChild(code);
+
+  if (typeof target === "string") {
+    target = document.getElementById(target);
+  }
+
+  target.appendChild(pre);
+}
+</script>
+
+<div id = "banner">
+</div>
+
+<div class = "header">
+    <div class = "header-text">
+        <h1>jank-os</h1>
+    </div>
+</div>
+    
+<div class = "nav_links">
+    <div class = "nav_link">
+        <a href = "../../../small_projects.html">Small Projects</a>
+    </div>
+    <div class = "nav_link">
+        <a href = "../../../index.html">Main Page</a>
+    </div>
+    <div class = "nav_link">
+        <a href = "../../../about_me.html">About Me</a>
+    </div>
+</div>
+
+<div class="sidebar">
+    <a href="#overview">Overview</a><br>
+    <a href="#boot-path">Boot Path</a><br>
+    <a href="#early-init">Early Kernel Init</a><br>
+    <a href="#memory">Memory Management</a><br>
+    <a href="#interrupts">Interrupts and Timers</a><br>
+    <a href="#scheduler">Scheduler and Processes</a><br>
+    <a href="#syscalls">Syscalls</a><br>
+    <a href="#userland">Userland</a><br>
+    <a href="#filesystem">Filesystem</a><br>
+    <a href="#usb">USB</a><br>
+    <a href="#networking">Networking</a><br>
+	<a href="#improvements">Improvements</a> <br>
+</div>
+
+<div class = "page">
+    <div class = "blog">
+		<p> 
+		During the development of jank-pl, I thought it would be cool to use the language to create a project, 
+		just to have something to stress test the compiler and the generated code. 
+		After a bit of thinking (and watching videos about TempleOS) I decided that creating my own operating system would 
+		be the best choice. 
+		Writing an operating system involves writing performant low level code, such as with the scheduler, 
+		context switching, and syscalls, and it also required the capability for high level abstractions like with the filesystem. 
+		As a whole, it was the perfect project to determine if the language I had created was just a toy, 
+		or a fully fledged programming language.
+		</p>
+		
+		<h2 id="overview">Overview</h2>
+		<p>
+	  	<b>jank-os</b> is a 64-bit x86_64 kernel written in <b>jank</b>.
+	  	The main goal was to have a system that could run on bare metal. 
+		</p>
+
+		<ul>
+		    <li>
+			    <b>UEFI Boot</b> : UEFI boot path with a custom bootloader, then the kernel does its own long-mode setup work
+			    (paging / GDT / IDT / syscall setup). My only regret was that I had to write this custom bootloader in C in order to use the
+				boot libraries provided by UEFI. 
+		    </li>
+		    <li>
+			    <b>Linux-Like Syscall Interface</b> : Syscall IDs match Linux (read / write / open / fork / etc.).
+				I found it especially useful to make my generated jank binaries compatible with both Linux and jank-os so 
+				that I could look at expected behaviour on Linux before testing on my own operating system. 
+		    </li>
+			<li>
+				<b>Higher-Half Kernel</b> : Provides isolation between kernel and user memory. 
+			</li>
+			<li>
+				<b>Preemptive Round-Robin Scheduler</b> : Allows for multitasking in userland. 
+				Good enough for now, perhaps in another project I'll tackle improving the scheduler.
+				While the scheduler can preempt while the CPU is in user-mode, I disable interrupts whenever I'm in kernel mode, 
+				so processes in kernel mode must voluntarily yield to the scheduler.
+				Perhaps later I'll make sure all my kernel code is multiprocess safe.
+			</li>
+			<li>
+				<b>Kernel Synchronization Primitives</b> : Allowing for processes to block in kernel mode while waiting on long running device IO commands
+				using <code>waitq</code> and maintaining coherence of shared kernel datastructures using <code>mutex</code>.
+			</li>
+			<li>
+				<b>Filesystem</b> : Implemented pipe, socket, tty, and vfs. 
+				VFS allows for mounting of supported filesystems, which currently only consists of ext2.
+			</li>
+			<li>
+				<b>VGA Terminal Emulator</b> : Terminal emulator capable of recognizing a good chunk of standard + non-standard ANSI escape codes. 
+				Writes to the framebuffer also have been relatively well optimized; it can scroll pretty quickly now. 
+			</li>
+			<li>
+				<b>XHCI USB Drivers</b> : Implemented mainly so I could boot off of a USB flash drive to expedite bare-metal testing. 
+				These drivers are relatively slow and they don't accomodate for devices that stray too far outside of USB spec. 
+			</li>
+			<li>
+				<b>Ethernet Networking Drivers</b> : Ability to send TCP / UDP requests to the outside world via ethernet port. 
+				Written by <code>1,000,000x</code> developer <a href="https://www.stevenchen.one/">Steven Chen</a>. Perhaps he'll add Wi-Fi support later.
+			</li>
+		</ul>
+		
+		<p>
+		Architecture-wise, the kernel draws heavily from Linux. 
+		Whenever there was a question as to how to do something, I pretty much always referenced the Linux manpages to see what sort of behaviour they had going on. 
+		I also mandated that all user programs that run on jank-os should also be able to be ran on Linux.
+		However as I get further away from the interface between the kernel and userland, I started disregarding Linux and opted to experiment more. 
+		</p>
+		
+		<h2 id="boot-path">Boot Path</h2>
+		<p>
+		
+		</p>
+		
+		<h2 id="early-init">Early Kernel Init</h2>
+		<p>
+		After the bootloader has finished and the kernel starts to run, there is still a lot of setup work left to be done. 
+		Here are some of the important subsystems that still have to be setup.
+		</p>
+		
+		<h3>Global Descriptor Table</h3>
+		
+		<h3>Interrupt Descriptor Table </h3>
+		
+		<h3>Interrupt Controllers</h3>
+		
+		<h3></h3>
+		
+		<h2 id="memory">Memory Management</h2>
+		<h2 id="interrupts">Interrupts and Timers</h2>
+		<h2 id="scheduler">Scheduler and Processes</h2>
+		<h2 id="syscalls">Syscalls</h2>
+		<h2 id="userland">Userland</h2>
+		<h2 id="filesystem">Filesystem</h2>
+		<h2 id="usb">USB</h2>
+		<h2 id="networking">Networking</h2>
+		<h2 id="improvements">Improvements</h2>
+        
+    </div>
+</div>
+
+</html>
