@@ -92,20 +92,20 @@ function insertCodeBlock(str, target) {
 <div class = "page">
     <div class = "blog">
 		<p> 
-		During the development of jank-pl, I thought it would be cool to use the language to create a project, 
-		just to have something to stress test the compiler and the generated code. 
-		After a bit of thinking (and watching videos about TempleOS) I decided that creating my own operating system would 
-		be the best choice. 
-		Writing an operating system involves writing performant low level code, such as with the scheduler, 
-		context switching, and syscalls, and it also required the capability for high level abstractions like with the filesystem. 
-		As a whole, it was the perfect project to determine if the language I had created was just a toy, 
-		or a fully fledged programming language.
+			During the development of jank-pl, I thought it would be cool to use the language to create a project, 
+			just to have something to stress test the compiler and the generated code. 
+			After a bit of thinking (and watching videos about TempleOS) I decided that creating my own operating system would 
+			be the best choice. 
+			Writing an operating system involves writing performant low level code, such as with the scheduler, 
+			context switching, and syscalls, and it also required the capability for high level abstractions like with the filesystem. 
+			As a whole, it was the perfect project to determine if the language I had created was just a toy, 
+			or a fully fledged programming language.
 		</p>
 		
 		<h2 id="overview">Overview</h2>
 		<p>
-	  	<b>jank-os</b> is a 64-bit x86_64 kernel written in <b>jank</b>.
-	  	The main goal was to have a system that could run on bare metal. 
+			<b>jank-os</b> is a 64-bit x86_64 kernel written in <b>jank</b>.
+			The main goal was to have a system that could run on bare metal. 
 		</p>
 
 		<ul>
@@ -152,15 +152,65 @@ function insertCodeBlock(str, target) {
 		</ul>
 		
 		<p>
-		Architecture-wise, the kernel draws heavily from Linux. 
-		Whenever there was a question as to how to do something, I pretty much always referenced the Linux manpages to see what sort of behaviour they had going on. 
-		I also mandated that all user programs that run on jank-os should also be able to be ran on Linux.
-		However as I get further away from the interface between the kernel and userland, I started disregarding Linux and opted to experiment more. 
+			Architecture-wise, the kernel draws heavily from Linux. 
+			Whenever there was a question as to how to do something, I pretty much always referenced the Linux manpages to see what sort of behaviour they had going on. 
+			I also mandated that all user programs that run on jank-os should also be able to be ran on Linux.
+			However as I get further away from the interface between the kernel and userland, I started disregarding Linux and opted to experiment more. 
 		</p>
 		
 		<h2 id="boot-path">Boot Path</h2>
 		<p>
-		
+			In order for the kernel to run, it needs to be placed in memory, the CPU needs to be switched to long mode, paging
+			needs to be set up, and so on. 
+			However when the user turns on the computer, memory is going to be uninitialized and the kernel binary is probably going
+			to be located in some attached hard drive storage device, so how can we even write code to get all of this set up?
+		</p>
+
+		<h3>BIOS</h3>
+		<p>
+			The <it>Basic Input / Output System</it> or <it>BIOS</it>, introduced in 1975 by IBM, 
+			solved this bootstrapping problem by first running some 
+			firmware to initialize the CPU in a useable state (16-bit real mode) and then it scans the attached hard drives until 
+			it finds a valid MBR with a boot partition. 
+		</p>
+
+		<!-- code block of MBR struct -->
+
+		<p>
+			It then loads the first sector of the selected drive into a fixed location in memory, <code>0x7C00</code>, points 
+			<code>%rip</code> there and starts execution. 
+			Since only the MBR gets loaded into memory, your entire first level bootloader that's responsible for loading your 
+			next level bootloader has to fit entirely within the fields allocated by the MBR that stores code, which is around
+			512 bytes.
+			Luckily, the BIOS firmware offers some boot utilities to read sectors from drives while in real mode, so you don't have
+			to fit an entire AHCI or USB controller into 512 bytes.
+			Note that since we're still in 16-bit real mode, we can only access the first $2^16$ bytes of memory, so that puts a 
+			cap on the size of our stage 2 bootloader. 
+		</p>
+
+		<p>
+			Finally, it's the second level bootloader that usually does all the setup required for the kernel to run. 
+			It then should load the kernel into memory, setup and map all the kernel datastructures into memory, 
+			and jump to it, relinquishing control. 
+		</p>
+
+		<h3>UEFI</h3>
+		<p>
+			Writing a legacy BIOS bootloader is cumbersome and boring. Apparently some other people thought so as well,
+			and they created the <it>Unified Extensible Firmware Interface</it> or <it>UEFI</it>. 
+			UEFI is firmware that massively streamlines writing a bootloader by taking care of all the real-mode CPU setup. 
+			It allows you to skip straight to writing C code in 64-bit long mode, and even provides some filesystem utilities
+			so that you can read files from an attached filesystem partition. 
+			It also internally maintains a memory map that you can send to your kernel for easy physical memory allocator setup.
+		</p>
+
+		<p>
+			Using UEFI involves writing a C program and compiling it to EFI bytecode, which is then interpreted by the 
+			UEFI firmware during boot. 
+		</p>
+
+		<p>
+			Currently, jank-os exclusively uses 
 		</p>
 		
 		<h2 id="early-init">Early Kernel Init</h2>
@@ -175,9 +225,13 @@ function insertCodeBlock(str, target) {
 		
 		<h3>Interrupt Controllers</h3>
 		
-		<h3></h3>
+		<h3>PCI Devices</h3>
+
+		<h3>PS2 Controller</h3>
 		
 		<h2 id="memory">Memory Management</h2>
+
+
 		<h2 id="interrupts">Interrupts and Timers</h2>
 		<h2 id="scheduler">Scheduler and Processes</h2>
 		<h2 id="syscalls">Syscalls</h2>
