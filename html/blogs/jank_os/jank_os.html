@@ -168,7 +168,7 @@ function insertCodeBlock(str, target) {
 
 		<h3>BIOS</h3>
 		<p>
-			The <it>Basic Input / Output System</it> or <it>BIOS</it>, introduced in 1975 by IBM, 
+			The <i>Basic Input / Output System</i> or <i>BIOS</i>, introduced in 1975 by IBM, 
 			solved this bootstrapping problem by first running some 
 			firmware to initialize the CPU in a useable state (16-bit real mode) and then it scans the attached hard drives until 
 			it finds a valid MBR with a boot partition. 
@@ -184,7 +184,7 @@ function insertCodeBlock(str, target) {
 			512 bytes.
 			Luckily, the BIOS firmware offers some boot utilities to read sectors from drives while in real mode, so you don't have
 			to fit an entire AHCI or USB controller into 512 bytes.
-			Note that since we're still in 16-bit real mode, we can only access the first $2^16$ bytes of memory, so that puts a 
+			Note that since we're still in 16-bit real mode, we can only access the first $2^{16}$ bytes of memory, so that puts a 
 			cap on the size of our stage 2 bootloader. 
 		</p>
 
@@ -197,7 +197,7 @@ function insertCodeBlock(str, target) {
 		<h3>UEFI</h3>
 		<p>
 			Writing a legacy BIOS bootloader is cumbersome and boring. Apparently some other people thought so as well,
-			and they created the <it>Unified Extensible Firmware Interface</it> or <it>UEFI</it>. 
+			and they created the <i>Unified Extensible Firmware Interface</i> or <i>UEFI</i>. 
 			UEFI is firmware that massively streamlines writing a bootloader by taking care of all the real-mode CPU setup. 
 			It allows you to skip straight to writing C code in 64-bit long mode, and even provides some filesystem utilities
 			so that you can read files from an attached filesystem partition. 
